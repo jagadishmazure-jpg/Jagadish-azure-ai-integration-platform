@@ -1,0 +1,99 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+# `azd up` provisions infra/main.bicep, builds the single platform image remotely in ACR and
+# rolls it out to every Container App (each runs a different command), then publishes the
+# Durable Functions app. Nothing in this repo runs `azd` automatically; see docs/deploy.md.
+name: azure-ai-integration-platform
+metadata:
+  template: azure-ai-integration-platform@0.1.0
+infra:
+  provider: bicep
+  path: infra
+  module: main
+services:
+  identity-gateway:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  tool-gateway:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  mcp-gateway:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  a2a-gateway:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  event-gateway:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  mcp-sap-orders:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  mcp-servicenow-incidents:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  mcp-sql-warehouse:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  agent-care-planner:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  agent-crm:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  agent-erp:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  agent-data:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  agent-ap-invoice:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  worker-order-events:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  worker-shipment-events:
+    project: .
+    language: python
+    host: containerapp
+    docker: { path: Dockerfile, context: ., remoteBuild: true }
+  bpm-functions:
+    project: ./functions
+    language: python
+    host: function
+hooks:
+  prepackage:
+    posix:
+      shell: sh
+      run: ./scripts/package_functions.sh
+    windows:
+      shell: pwsh
+      run: ./scripts/package_functions.ps1

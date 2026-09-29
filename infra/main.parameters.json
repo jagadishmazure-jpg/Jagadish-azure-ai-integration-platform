@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environmentName": { "value": "${AZURE_ENV_NAME}" },
+    "location": { "value": "${AZURE_LOCATION}" },
+    "entraTenantId": { "value": "${AIIP_ENTRA_TENANT_ID=}" },
+    "apimPublisherEmail": { "value": "${AIIP_APIM_PUBLISHER_EMAIL=noreply@example.com}" },
+    "apimSku": { "value": "${AIIP_APIM_SKU=Consumption}" },
+    "serviceBusSku": { "value": "${AIIP_SERVICEBUS_SKU=Basic}" },
+    "logDailyQuotaGb": { "value": "${AIIP_LOG_DAILY_QUOTA_GB=1}" },
+    "deployFrontDoor": { "value": "${AIIP_DEPLOY_FRONT_DOOR=false}" },
+    "privateNetworking": { "value": "${AIIP_PRIVATE_NETWORKING=false}" },
+    "computeProfile": { "value": "${AIIP_COMPUTE_PROFILE=containerapps}" }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "servers": [
+    {
+      "agent_role": "Orders.Read",
+      "description": "SAP sales orders and deliveries (OData)",
+      "mode": "read-only",
+      "name": "sap-orders",
+      "owner": "Jagadish Meduri (integration engineering)",
+      "standin": true,
+      "system": "sap",
+      "transport": "in-process"
+    },
+    {
+      "agent_role": "Incidents.Read",
+      "description": "ServiceNow incident table",
+      "mode": "read-write (HITL)",
+      "name": "servicenow-incidents",
+      "owner": "Jagadish Meduri (integration engineering)",
+      "standin": true,
+      "system": "servicenow",
+      "transport": "in-process"
+    },
+    {
+      "agent_role": "Analytics.Read",
+      "description": "Databricks-style SQL warehouse, allow-listed tables",
+      "mode": "read-only",
+      "name": "sql-warehouse",
+      "owner": "Jagadish Meduri (integration engineering)",
+      "standin": true,
+      "system": "databricks",
+      "transport": "in-process"
+    }
+  ]
+}

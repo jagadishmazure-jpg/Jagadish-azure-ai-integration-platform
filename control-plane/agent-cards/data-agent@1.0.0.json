@@ -1,0 +1,90 @@
+{
+  "capabilities": {
+    "extensions": [
+      {
+        "description": "Integration contract: owner, SLA, side effects, callers, schemas, eval score",
+        "params": {
+          "agent_id": "data-agent",
+          "allowed_callers": [
+            "care-planner"
+          ],
+          "eval_score": 1.0,
+          "identity_mode": "agent",
+          "owner": "Jagadish Meduri (integration engineering)",
+          "requires_headers": [
+            "authorization",
+            "traceparent",
+            "x-tenant-id",
+            "A2A-Version"
+          ],
+          "side_effect_class": "read",
+          "skills": {
+            "delivery_kpis": {
+              "hitl": false,
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "region": {
+                    "enum": [
+                      "east",
+                      "west"
+                    ]
+                  }
+                },
+                "required": [
+                  "region"
+                ],
+                "type": "object"
+              },
+              "side_effect": "read"
+            }
+          },
+          "sla": {
+            "availability": "99.5%",
+            "p95_ms": 3000.0
+          },
+          "system_of_record": "databricks-style warehouse",
+          "version": "1.0.0"
+        },
+        "uri": "urn:aiip:integration-contract:v1"
+      }
+    ],
+    "streaming": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "description": "Owns the SQL dialect and table permissions of the analytics warehouse; reached through the MCP gateway.",
+  "name": "Data / analytics agent",
+  "provider": {
+    "organization": "AI Integration Platform (demo)",
+    "url": "https://github.com/jagadishmazure-jpg"
+  },
+  "skills": [
+    {
+      "description": "On-time and late-shipment KPIs by region. [side-effect: read]",
+      "id": "delivery_kpis",
+      "inputModes": [
+        "application/json"
+      ],
+      "name": "Delivery KPIs",
+      "outputModes": [
+        "application/json"
+      ],
+      "tags": [
+        "read"
+      ]
+    }
+  ],
+  "supportedInterfaces": [
+    {
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0",
+      "url": "http://agent-data.inproc/a2a"
+    }
+  ],
+  "version": "1.0.0"
+}

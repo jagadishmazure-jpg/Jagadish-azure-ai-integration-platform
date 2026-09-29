@@ -1,0 +1,4 @@
+{"id": "erp-01", "user": "alice", "skill": "order_status", "input": {"order_id": "4500001"}, "expect": {"path": "delivery.days_late", "equals": 7}}
+{"id": "erp-02", "user": "alice", "skill": "order_status", "input": {"order_id": "4500002"}, "expect": {"path": "order.status", "equals": "open"}}
+{"id": "erp-03", "user": "alice", "skill": "order_status", "input": {"order_id": "4599999"}, "expect": {"error": "not_found"}}
+{"id": "erp-04", "user": "alice", "skill": "simulate_order", "input": {"customer_ref": "ACC-1001", "items": [{"material": "MAT-BOLT-07", "quantity": 10}]}, "expect": {"path": "simulation.net_amount", "equals": "24.00"}}

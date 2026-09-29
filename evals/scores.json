@@ -1,0 +1,35 @@
+{
+  "generated_at": "2026-09-29T09:55:05+00:00",
+  "threshold": 0.9,
+  "agents": {
+    "ap-invoice-agent": {
+      "score": 1.0,
+      "passed": 6,
+      "total": 6
+    },
+    "care-planner": {
+      "score": 1.0,
+      "passed": 5,
+      "total": 5
+    },
+    "crm-agent": {
+      "score": 1.0,
+      "passed": 6,
+      "total": 6
+    },
+    "data-agent": {
+      "score": 1.0,
+      "passed": 3,
+      "total": 3
+    },
+    "erp-agent": {
+      "score": 1.0,
+      "passed": 4,
+      "total": 4
+    }
+  },
+  "contracts": {
+    "passed": 28,
+    "total": 28
+  }
+}

@@ -1,0 +1,6 @@
+{"id": "ap-01", "skill": "extract", "input": {"text": "ACME Metals\nInvoice No: INV-7781\nVendor ID: V-44\nPO: 4500009001\nTotal due: USD 12,000.00\nTax code: V1"}, "expect": {"path": "invoice.amount", "equals": "12000.00"}}
+{"id": "ap-02", "skill": "extract", "input": {"text": "Invoice # INV-1234 total 55.00"}, "expect": {"path": "missing", "contains": "po_id"}}
+{"id": "ap-03", "skill": "classify", "input": {"invoice": {"vendor_invoice_no": "INV-3100", "po_id": "4500009002", "supplier_id": "V-51", "amount": "1200.00", "tax_code": "V1"}}, "expect": {"path": "route", "equals": "auto"}}
+{"id": "ap-04", "skill": "classify", "input": {"invoice": {"vendor_invoice_no": "INV-7781", "po_id": "4500009001", "supplier_id": "V-44", "amount": "12000.00", "tax_code": "V1"}}, "expect": {"path": "route", "equals": "review"}}
+{"id": "ap-05", "skill": "classify", "input": {"invoice": {"vendor_invoice_no": "INV-9", "po_id": "4500009999", "supplier_id": "V-1", "amount": "1.00", "tax_code": "V1"}}, "expect": {"path": "route", "equals": "reject"}}
+{"id": "ap-06", "skill": "draft", "input": {"kind": "remittance", "facts": {"vendor_invoice_no": "INV-1", "invoice_document": "5105600009"}}, "expect": {"path": "text", "contains": "5105600009"}}

@@ -1,0 +1,57 @@
+// Integration observability queries (Log Analytics, workspace-based Application Insights tables).
+// Spans from aiip.shared.telemetry land in AppDependencies with integration.* keys in Properties;
+// OpenTelemetry metrics land in AppMetrics. Each block is referenced by name from
+// scripts/build_dashboards.py, which generates the workbook and the Grafana dashboard.
+
+// @name success_by_system
+AppDependencies
+| where isnotempty(Properties["integration.system"])
+| extend system = tostring(Properties["integration.system"]), result = tostring(Properties["integration.result_class"])
+| summarize total = count(), ok = countif(result == "ok") by system
+| extend success_pct = round(100.0 * ok / total, 1)
+| order by success_pct asc
+
+// @name result_classes_over_time
+AppDependencies
+| where isnotempty(Properties["integration.result_class"])
+| summarize calls = count() by result_class = tostring(Properties["integration.result_class"]), bin(TimeGenerated, 5m)
+
+// @name p95_by_tool
+AppDependencies
+| where tostring(Properties["service.component"]) in ("tool-gateway", "mcp-gateway")
+| summarize p95_ms = percentile(DurationMs, 95), calls = count() by tool = tostring(Properties["integration.operation"])
+| order by p95_ms desc
+
+// @name poison_queue_depth
+AppMetrics
+| where Name == "queue.depth"
+| extend queue = tostring(Properties["queue"])
+| where queue endswith "$deadletterqueue" or queue endswith "/parked"
+| summarize depth = max(Max) by queue, bin(TimeGenerated, 5m)
+
+// @name servicebus_dead_letters
+AzureMetrics
+| where ResourceProvider == "MICROSOFT.SERVICEBUS" and MetricName == "DeadletteredMessages"
+| summarize dead_lettered = max(Maximum) by EntityName = tostring(split(ResourceId, "/")[-1]), bin(TimeGenerated, 5m)
+
+// @name identity_mix
+AppDependencies
+| where isnotempty(Properties["integration.identity_mode"])
+| summarize calls = count() by identity_mode = tostring(Properties["integration.identity_mode"])
+
+// @name business_rejects_http_200
+AppDependencies
+| where tostring(Properties["integration.result_class"]) == "business_reject"
+| project TimeGenerated, system = tostring(Properties["integration.system"]), operation = tostring(Properties["integration.operation"]), business_key = tostring(Properties["integration.business_key"]), vendor_code = tostring(Properties["integration.vendor_code"]), actor = tostring(Properties["integration.actor"])
+| order by TimeGenerated desc
+
+// @name process_completions
+AppMetrics
+| where Name == "process.completions"
+| summarize completions = sum(Sum) by process = tostring(Properties["process"]), outcome = tostring(Properties["outcome"])
+
+// @name who_did_what
+AppDependencies
+| where isnotempty(Properties["integration.business_key"])
+| project TimeGenerated, actor = tostring(Properties["integration.actor"]), subject = tostring(Properties["integration.subject"]), mode = tostring(Properties["integration.identity_mode"]), operation = tostring(Properties["integration.operation"]), business_key = tostring(Properties["integration.business_key"]), result = tostring(Properties["integration.result_class"]), OperationId
+| order by TimeGenerated desc

@@ -1,0 +1,283 @@
+{
+  "title": "AI Integration Plane",
+  "uid": "aiip-integration",
+  "schemaVersion": 39,
+  "tags": [
+    "aiip",
+    "integration",
+    "agents"
+  ],
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "grafana-azure-monitor-datasource"
+      },
+      {
+        "name": "workspace",
+        "type": "textbox",
+        "label": "Log Analytics workspace resource id",
+        "query": ""
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Success rate by system",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "AppDependencies\n| where isnotempty(Properties[\"integration.system\"])\n| extend system = tostring(Properties[\"integration.system\"]), result = tostring(Properties[\"integration.result_class\"])\n| summarize total = count(), ok = countif(result == \"ok\") by system\n| extend success_pct = round(100.0 * ok / total, 1)\n| order by success_pct asc",
+            "resources": [
+              "${workspace}"
+            ],
+            "resultFormat": "table"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Result classes over time (ok, business_reject, timeout, authz_deny...)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "AppDependencies\n| where isnotempty(Properties[\"integration.result_class\"])\n| summarize calls = count() by result_class = tostring(Properties[\"integration.result_class\"]), bin(TimeGenerated, 5m)",
+            "resources": [
+              "${workspace}"
+            ],
+            "resultFormat": "time_series"
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "p95 latency by tool (ms)",
+      "type": "barchart",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "AppDependencies\n| where tostring(Properties[\"service.component\"]) in (\"tool-gateway\", \"mcp-gateway\")\n| summarize p95_ms = percentile(DurationMs, 95), calls = count() by tool = tostring(Properties[\"integration.operation\"])\n| order by p95_ms desc",
+            "resources": [
+              "${workspace}"
+            ],
+            "resultFormat": "table"
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Poison / parked queue depth (app gauge)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "AppMetrics\n| where Name == \"queue.depth\"\n| extend queue = tostring(Properties[\"queue\"])\n| where queue endswith \"$deadletterqueue\" or queue endswith \"/parked\"\n| summarize depth = max(Max) by queue, bin(TimeGenerated, 5m)",
+            "resources": [
+              "${workspace}"
+            ],
+            "resultFormat": "time_series"
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Service Bus dead-lettered messages (platform metric)",
+      "type": "timeseries",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "AzureMetrics\n| where ResourceProvider == \"MICROSOFT.SERVICEBUS\" and MetricName == \"DeadletteredMessages\"\n| summarize dead_lettered = max(Maximum) by EntityName = tostring(split(ResourceId, \"/\")[-1]), bin(TimeGenerated, 5m)",
+            "resources": [
+              "${workspace}"
+            ],
+            "resultFormat": "time_series"
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "OBO vs agent identity mix",
+      "type": "piechart",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "AppDependencies\n| where isnotempty(Properties[\"integration.identity_mode\"])\n| summarize calls = count() by identity_mode = tostring(Properties[\"integration.identity_mode\"])",
+            "resources": [
+              "${workspace}"
+            ],
+            "resultFormat": "table"
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Business rejects (HTTP 200 with error payload)",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "AppDependencies\n| where tostring(Properties[\"integration.result_class\"]) == \"business_reject\"\n| project TimeGenerated, system = tostring(Properties[\"integration.system\"]), operation = tostring(Properties[\"integration.operation\"]), business_key = tostring(Properties[\"integration.business_key\"]), vendor_code = tostring(Properties[\"integration.vendor_code\"]), actor = tostring(Properties[\"integration.actor\"])\n| order by TimeGenerated desc",
+            "resources": [
+              "${workspace}"
+            ],
+            "resultFormat": "table"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Process completions by outcome",
+      "type": "barchart",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "AppMetrics\n| where Name == \"process.completions\"\n| summarize completions = sum(Sum) by process = tostring(Properties[\"process\"]), outcome = tostring(Properties[\"outcome\"])",
+            "resources": [
+              "${workspace}"
+            ],
+            "resultFormat": "table"
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Audit view: who did what to which business key",
+      "type": "table",
+      "datasource": {
+        "type": "grafana-azure-monitor-datasource",
+        "uid": "${datasource}"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "AppDependencies\n| where isnotempty(Properties[\"integration.business_key\"])\n| project TimeGenerated, actor = tostring(Properties[\"integration.actor\"]), subject = tostring(Properties[\"integration.subject\"]), mode = tostring(Properties[\"integration.identity_mode\"]), operation = tostring(Properties[\"integration.operation\"]), business_key = tostring(Properties[\"integration.business_key\"]), result = tostring(Properties[\"integration.result_class\"]), OperationId\n| order by TimeGenerated desc",
+            "resources": [
+              "${workspace}"
+            ],
+            "resultFormat": "table"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1399 @@
+{
+  "tools": [
+    {
+      "app_role": "Accounts.Read.All",
+      "business_key": "account_id",
+      "cache_ttl_s": 30,
+      "description": "Customer account (canonical Customer) from the CRM.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": false,
+      "identity": "user_or_agent",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "pattern": "^(ACC-[0-9]{4}|[A-Za-z0-9]{15,18})$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_id"
+        ],
+        "type": "object"
+      },
+      "name": "crm.get_account",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_number": {
+            "title": "Account Number",
+            "type": "string"
+          },
+          "credit_hold": {
+            "title": "Credit Hold",
+            "type": "boolean"
+          },
+          "customer_id": {
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "region": {
+            "title": "Region",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "tier": {
+            "title": "Tier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "customer_id",
+          "account_number",
+          "name",
+          "tier",
+          "region",
+          "credit_hold"
+        ],
+        "title": "Customer",
+        "type": "object"
+      },
+      "side_effect": "read",
+      "system": "salesforce",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Accounts.Read.All",
+      "business_key": "account_id",
+      "cache_ttl_s": 15,
+      "description": "Cases for an account.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": false,
+      "identity": "user_or_agent",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "pattern": "^(ACC-[0-9]{4}|[A-Za-z0-9]{15,18})$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_id"
+        ],
+        "type": "object"
+      },
+      "name": "crm.list_cases",
+      "output_schema": {
+        "properties": {
+          "account_id": {
+            "type": "string"
+          },
+          "cases": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "case_id": {
+                  "title": "Case Id",
+                  "type": "string"
+                },
+                "case_number": {
+                  "title": "Case Number",
+                  "type": "string"
+                },
+                "source_system": {
+                  "title": "Source System",
+                  "type": "string"
+                },
+                "status": {
+                  "title": "Status",
+                  "type": "string"
+                },
+                "subject": {
+                  "title": "Subject",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "source_system",
+                "case_id",
+                "case_number",
+                "subject",
+                "status"
+              ],
+              "title": "CaseSummary",
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "account_id",
+          "cases"
+        ],
+        "type": "object"
+      },
+      "side_effect": "read",
+      "system": "salesforce",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Cases.Write",
+      "business_key": "account_id",
+      "cache_ttl_s": 0,
+      "description": "Create or update a case keyed by the idempotency key.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": true,
+      "identity": "user_or_agent",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_id": {
+            "pattern": "^(ACC-[0-9]{4}|[A-Za-z0-9]{15,18})$",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "priority": {
+            "enum": [
+              "Low",
+              "Medium",
+              "High"
+            ]
+          },
+          "subject": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_id",
+          "subject"
+        ],
+        "type": "object"
+      },
+      "name": "crm.upsert_case",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          },
+          "customer_id": {
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "external_id": {
+            "title": "External Id",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "case_id",
+          "external_id",
+          "customer_id",
+          "created"
+        ],
+        "title": "Case",
+        "type": "object"
+      },
+      "side_effect": "commit",
+      "system": "salesforce",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "",
+      "business_key": "account_number",
+      "cache_ttl_s": 60,
+      "description": "Service entitlement / SLA from Dynamics 365 (Dataverse), as the user.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": false,
+      "identity": "user_required",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_number": {
+            "pattern": "^ACC-[0-9]{4}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_number"
+        ],
+        "type": "object"
+      },
+      "name": "service.get_entitlement",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "customer_id": {
+            "title": "Customer Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "response_hours": {
+            "title": "Response Hours",
+            "type": "integer"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "customer_id",
+          "name",
+          "response_hours"
+        ],
+        "title": "Entitlement",
+        "type": "object"
+      },
+      "side_effect": "read",
+      "system": "dataverse",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "",
+      "business_key": "account_number",
+      "cache_ttl_s": 0,
+      "description": "Create or update a Dataverse incident by alternate key.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": true,
+      "identity": "user_required",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "account_number": {
+            "pattern": "^ACC-[0-9]{4}$",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_number",
+          "title"
+        ],
+        "type": "object"
+      },
+      "name": "service.upsert_incident",
+      "output_schema": {
+        "properties": {
+          "created": {
+            "type": "boolean"
+          },
+          "source_system": {
+            "const": "dataverse"
+          },
+          "ticketnumber": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketnumber",
+          "created"
+        ],
+        "type": "object"
+      },
+      "side_effect": "commit",
+      "system": "dataverse",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Orders.Read",
+      "business_key": "order_id",
+      "cache_ttl_s": 20,
+      "description": "Sales order header in business terms.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": false,
+      "identity": "user_or_agent",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "order_id": {
+            "pattern": "^[0-9]{7}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "order_id"
+        ],
+        "type": "object"
+      },
+      "name": "erp.get_sales_order",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "customer_ref": {
+            "title": "Customer Ref",
+            "type": "string"
+          },
+          "delivery_status": {
+            "title": "Delivery Status",
+            "type": "string"
+          },
+          "net_amount": {
+            "title": "Net Amount",
+            "type": "string"
+          },
+          "order_id": {
+            "title": "Order Id",
+            "type": "string"
+          },
+          "requested_delivery_date": {
+            "title": "Requested Delivery Date",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "order_id",
+          "customer_ref",
+          "net_amount",
+          "currency",
+          "status",
+          "delivery_status",
+          "requested_delivery_date"
+        ],
+        "title": "SalesOrder",
+        "type": "object"
+      },
+      "side_effect": "read",
+      "system": "sap",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Shipments.Read",
+      "business_key": "delivery_id",
+      "cache_ttl_s": 20,
+      "description": "Outbound delivery with days late.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": false,
+      "identity": "user_or_agent",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "delivery_id": {
+            "pattern": "^8[0-9]{7}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "delivery_id"
+        ],
+        "type": "object"
+      },
+      "name": "erp.get_delivery",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "carrier": {
+            "title": "Carrier",
+            "type": "string"
+          },
+          "days_late": {
+            "title": "Days Late",
+            "type": "integer"
+          },
+          "delivery_id": {
+            "title": "Delivery Id",
+            "type": "string"
+          },
+          "order_id": {
+            "title": "Order Id",
+            "type": "string"
+          },
+          "planned_date": {
+            "title": "Planned Date",
+            "type": "string"
+          },
+          "revised_date": {
+            "title": "Revised Date",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "delivery_id",
+          "order_id",
+          "planned_date",
+          "revised_date",
+          "carrier",
+          "days_late"
+        ],
+        "title": "Delivery",
+        "type": "object"
+      },
+      "side_effect": "read",
+      "system": "sap",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Orders.Simulate",
+      "business_key": "customer_ref",
+      "cache_ttl_s": 0,
+      "description": "Price an order without persisting it.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": false,
+      "identity": "user_or_agent",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "customer_ref": {
+            "pattern": "^ACC-[0-9]{4}$",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "material": {
+                  "pattern": "^MAT-[A-Z0-9-]+$",
+                  "type": "string"
+                },
+                "quantity": {
+                  "maximum": 10000,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "material",
+                "quantity"
+              ],
+              "type": "object"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "customer_ref",
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "erp.simulate_sales_order",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "customer_ref": {
+            "title": "Customer Ref",
+            "type": "string"
+          },
+          "lines": {
+            "title": "Lines",
+            "type": "integer"
+          },
+          "net_amount": {
+            "title": "Net Amount",
+            "type": "string"
+          },
+          "simulated": {
+            "title": "Simulated",
+            "type": "boolean"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "customer_ref",
+          "net_amount",
+          "lines",
+          "simulated"
+        ],
+        "title": "OrderSimulation",
+        "type": "object"
+      },
+      "side_effect": "simulate",
+      "system": "sap",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "",
+      "business_key": "customer_ref",
+      "cache_ttl_s": 0,
+      "description": "Create a sales order (human approval required).",
+      "hitl": true,
+      "hitl_above": null,
+      "idempotency_required": true,
+      "identity": "user_required",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "customer_po": {
+            "maxLength": 35,
+            "type": "string"
+          },
+          "customer_ref": {
+            "pattern": "^ACC-[0-9]{4}$",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "material": {
+                  "pattern": "^MAT-[A-Z0-9-]+$",
+                  "type": "string"
+                },
+                "quantity": {
+                  "maximum": 10000,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "material",
+                "quantity"
+              ],
+              "type": "object"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "customer_ref",
+          "items"
+        ],
+        "type": "object"
+      },
+      "name": "erp.create_sales_order",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "customer_ref": {
+            "title": "Customer Ref",
+            "type": "string"
+          },
+          "delivery_status": {
+            "title": "Delivery Status",
+            "type": "string"
+          },
+          "net_amount": {
+            "title": "Net Amount",
+            "type": "string"
+          },
+          "order_id": {
+            "title": "Order Id",
+            "type": "string"
+          },
+          "requested_delivery_date": {
+            "title": "Requested Delivery Date",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "order_id",
+          "customer_ref",
+          "net_amount",
+          "currency",
+          "status",
+          "delivery_status",
+          "requested_delivery_date"
+        ],
+        "title": "SalesOrder",
+        "type": "object"
+      },
+      "side_effect": "commit",
+      "system": "sap",
+      "timeout_s": 5
+    },
+    {
+      "app_role": "PurchaseOrders.Read",
+      "business_key": "po_id",
+      "cache_ttl_s": 60,
+      "description": "Purchase order with total for three-way match.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": false,
+      "identity": "user_or_agent",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "po_id": {
+            "pattern": "^45000[0-9]{5}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "po_id"
+        ],
+        "type": "object"
+      },
+      "name": "erp.get_purchase_order",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "cost_center": {
+            "title": "Cost Center",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "po_id": {
+            "title": "Po Id",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "supplier_id": {
+            "title": "Supplier Id",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "po_id",
+          "supplier_id",
+          "currency",
+          "cost_center",
+          "total"
+        ],
+        "title": "PurchaseOrder",
+        "type": "object"
+      },
+      "side_effect": "read",
+      "system": "sap",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Invoices.Write",
+      "business_key": "vendor_invoice_no",
+      "cache_ttl_s": 0,
+      "description": "Park a supplier invoice (not yet posted).",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": true,
+      "identity": "agent_only",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "pattern": "^[0-9]{1,9}(\\.[0-9]{2})?$",
+            "type": "string"
+          },
+          "po_id": {
+            "type": "string"
+          },
+          "supplier_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tax_code": {
+            "maxLength": 4,
+            "type": "string"
+          },
+          "vendor_invoice_no": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "po_id",
+          "supplier_id",
+          "amount",
+          "tax_code",
+          "vendor_invoice_no"
+        ],
+        "type": "object"
+      },
+      "name": "erp.park_invoice",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "invoice_document": {
+            "title": "Invoice Document",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "invoice_document",
+          "status",
+          "messages"
+        ],
+        "title": "InvoiceResult",
+        "type": "object"
+      },
+      "side_effect": "commit",
+      "system": "sap",
+      "timeout_s": 5
+    },
+    {
+      "app_role": "Invoices.Write",
+      "business_key": "invoice_document",
+      "cache_ttl_s": 0,
+      "description": "Post a parked invoice to the ledger (human approval above 10,000.00; SAP verifies the stated amount).",
+      "hitl": true,
+      "hitl_above": 10000.0,
+      "idempotency_required": true,
+      "identity": "agent_only",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "pattern": "^[0-9]{1,9}(\\.[0-9]{2})?$",
+            "type": "string"
+          },
+          "invoice_document": {
+            "pattern": "^51056[0-9]{5}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoice_document",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "name": "erp.post_parked_invoice",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "invoice_document": {
+            "title": "Invoice Document",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "invoice_document",
+          "status",
+          "messages"
+        ],
+        "title": "InvoiceResult",
+        "type": "object"
+      },
+      "side_effect": "commit",
+      "system": "sap",
+      "timeout_s": 5
+    },
+    {
+      "app_role": "Invoices.Write",
+      "business_key": "invoice_document",
+      "cache_ttl_s": 0,
+      "description": "Compensation: delete a parked invoice.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": true,
+      "identity": "agent_only",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "invoice_document": {
+            "pattern": "^51056[0-9]{5}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoice_document"
+        ],
+        "type": "object"
+      },
+      "name": "erp.delete_parked_invoice",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "invoice_document": {
+            "title": "Invoice Document",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "invoice_document",
+          "status",
+          "messages"
+        ],
+        "title": "InvoiceResult",
+        "type": "object"
+      },
+      "side_effect": "commit",
+      "system": "sap",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Invoices.Write",
+      "business_key": "invoice_document",
+      "cache_ttl_s": 0,
+      "description": "Compensation: reverse a posted invoice.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": true,
+      "identity": "agent_only",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "invoice_document": {
+            "pattern": "^51056[0-9]{5}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoice_document"
+        ],
+        "type": "object"
+      },
+      "name": "erp.reverse_invoice",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "invoice_document": {
+            "title": "Invoice Document",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "invoice_document",
+          "status",
+          "messages"
+        ],
+        "title": "InvoiceResult",
+        "type": "object"
+      },
+      "side_effect": "commit",
+      "system": "sap",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Invoices.Write",
+      "business_key": "invoice_document",
+      "cache_ttl_s": 0,
+      "description": "Schedule payment for a posted invoice.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": true,
+      "identity": "agent_only",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "invoice_document": {
+            "pattern": "^51056[0-9]{5}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invoice_document"
+        ],
+        "type": "object"
+      },
+      "name": "erp.schedule_payment",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "invoice_document": {
+            "title": "Invoice Document",
+            "type": "string"
+          },
+          "messages": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Messages",
+            "type": "array"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "invoice_document",
+          "status",
+          "messages"
+        ],
+        "title": "InvoiceResult",
+        "type": "object"
+      },
+      "side_effect": "commit",
+      "system": "sap",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Incidents.Write",
+      "business_key": "business_key",
+      "cache_ttl_s": 0,
+      "description": "Open an ITSM incident (idempotent on correlation id).",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": true,
+      "identity": "user_or_agent",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "business_key": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "priority": {
+            "maximum": 5,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "short_description": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "short_description",
+          "business_key"
+        ],
+        "type": "object"
+      },
+      "name": "itsm.create_incident",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "correlation_id": {
+            "title": "Correlation Id",
+            "type": "string"
+          },
+          "incident_id": {
+            "title": "Incident Id",
+            "type": "string"
+          },
+          "number": {
+            "title": "Number",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "string"
+          },
+          "short_description": {
+            "title": "Short Description",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "incident_id",
+          "number",
+          "short_description",
+          "state",
+          "priority",
+          "correlation_id"
+        ],
+        "title": "Incident",
+        "type": "object"
+      },
+      "side_effect": "commit",
+      "system": "servicenow",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Workers.Read",
+      "business_key": "worker_id",
+      "cache_ttl_s": 300,
+      "description": "Worker reference data (minimal fields).",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": false,
+      "identity": "agent_only",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "worker_id": {
+            "pattern": "^W-[0-9]{3}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "worker_id"
+        ],
+        "type": "object"
+      },
+      "name": "hr.get_worker",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "approval_limit": {
+            "title": "Approval Limit",
+            "type": "number"
+          },
+          "cost_center": {
+            "title": "Cost Center",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "is_manager": {
+            "title": "Is Manager",
+            "type": "boolean"
+          },
+          "manager_id": {
+            "title": "Manager Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "worker_id": {
+            "title": "Worker Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "worker_id",
+          "name",
+          "email",
+          "title",
+          "cost_center",
+          "manager_id",
+          "is_manager",
+          "approval_limit"
+        ],
+        "title": "Worker",
+        "type": "object"
+      },
+      "side_effect": "read",
+      "system": "workday",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Workers.Read",
+      "business_key": "cost_center",
+      "cache_ttl_s": 300,
+      "description": "Approver for a cost center and amount.",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": false,
+      "identity": "agent_only",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "minimum": 0,
+            "type": "number"
+          },
+          "cost_center": {
+            "pattern": "^CC-[0-9]{3}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cost_center",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "name": "hr.find_approver",
+      "output_schema": {
+        "properties": {
+          "approver": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "approval_limit": {
+                    "title": "Approval Limit",
+                    "type": "number"
+                  },
+                  "cost_center": {
+                    "title": "Cost Center",
+                    "type": "string"
+                  },
+                  "email": {
+                    "title": "Email",
+                    "type": "string"
+                  },
+                  "is_manager": {
+                    "title": "Is Manager",
+                    "type": "boolean"
+                  },
+                  "manager_id": {
+                    "title": "Manager Id",
+                    "type": "string"
+                  },
+                  "name": {
+                    "title": "Name",
+                    "type": "string"
+                  },
+                  "source_system": {
+                    "title": "Source System",
+                    "type": "string"
+                  },
+                  "title": {
+                    "title": "Title",
+                    "type": "string"
+                  },
+                  "worker_id": {
+                    "title": "Worker Id",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "source_system",
+                  "worker_id",
+                  "name",
+                  "email",
+                  "title",
+                  "cost_center",
+                  "manager_id",
+                  "is_manager",
+                  "approval_limit"
+                ],
+                "title": "Worker",
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "approver"
+        ],
+        "type": "object"
+      },
+      "side_effect": "read",
+      "system": "workday",
+      "timeout_s": 3.0
+    },
+    {
+      "app_role": "Incidents.Write",
+      "business_key": "business_key",
+      "cache_ttl_s": 0,
+      "description": "Open an engineering issue in Jira (idempotent label).",
+      "hitl": false,
+      "hitl_above": null,
+      "idempotency_required": true,
+      "identity": "agent_only",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "business_key": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "project": {
+            "enum": [
+              "OPS",
+              "INT"
+            ]
+          },
+          "summary": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "project",
+          "summary",
+          "business_key"
+        ],
+        "type": "object"
+      },
+      "name": "eng.create_issue",
+      "output_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          },
+          "issue_key": {
+            "title": "Issue Key",
+            "type": "string"
+          },
+          "source_system": {
+            "title": "Source System",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_system",
+          "issue_key",
+          "created"
+        ],
+        "title": "Issue",
+        "type": "object"
+      },
+      "side_effect": "commit",
+      "system": "jira",
+      "timeout_s": 3.0
+    }
+  ]
+}

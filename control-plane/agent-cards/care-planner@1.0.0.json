@@ -1,0 +1,100 @@
+{
+  "capabilities": {
+    "extensions": [
+      {
+        "description": "Integration contract: owner, SLA, side effects, callers, schemas, eval score",
+        "params": {
+          "agent_id": "care-planner",
+          "allowed_callers": [
+            "experience-bff"
+          ],
+          "eval_score": 1.0,
+          "identity_mode": "obo",
+          "owner": "Jagadish Meduri (integration engineering)",
+          "requires_headers": [
+            "authorization",
+            "traceparent",
+            "x-tenant-id",
+            "A2A-Version"
+          ],
+          "side_effect_class": "commit",
+          "skills": {
+            "resolve_customer_request": {
+              "hitl": false,
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "account_number": {
+                    "pattern": "^ACC-[0-9]{4}$",
+                    "type": "string"
+                  },
+                  "open_case": {
+                    "type": "boolean"
+                  },
+                  "order_id": {
+                    "pattern": "^[0-9]{7}$",
+                    "type": "string"
+                  },
+                  "question": {
+                    "maxLength": 500.0,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "account_number",
+                  "question"
+                ],
+                "type": "object"
+              },
+              "side_effect": "commit"
+            }
+          },
+          "sla": {
+            "availability": "99.5%",
+            "p95_ms": 4000.0
+          },
+          "system_of_record": "",
+          "version": "1.0.0"
+        },
+        "uri": "urn:aiip:integration-contract:v1"
+      }
+    ],
+    "streaming": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "description": "Interactive planner for care reps. Fans out to CRM, ERP and data agents over A2A and composes one answer.",
+  "name": "Customer-care planner",
+  "provider": {
+    "organization": "AI Integration Platform (demo)",
+    "url": "https://github.com/jagadishmazure-jpg"
+  },
+  "skills": [
+    {
+      "description": "Account, order and delivery picture for one customer question; may open a case. [side-effect: commit]",
+      "id": "resolve_customer_request",
+      "inputModes": [
+        "application/json"
+      ],
+      "name": "Resolve customer request",
+      "outputModes": [
+        "application/json"
+      ],
+      "tags": [
+        "commit"
+      ]
+    }
+  ],
+  "supportedInterfaces": [
+    {
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0",
+      "url": "http://agent-care-planner.inproc/a2a"
+    }
+  ],
+  "version": "1.0.0"
+}

@@ -1,0 +1,6 @@
+{"id": "crm-01", "user": "alice", "skill": "account_summary", "version": "1", "input": {"account_number": "ACC-1001"}, "expect": {"path": "account.name", "equals": "Northwind Traders"}}
+{"id": "crm-02", "user": "alice", "skill": "account_summary", "version": "1", "input": {"account_number": "ACC-1003"}, "expect": {"path": "account.credit_hold", "equals": true}}
+{"id": "crm-03", "user": "bob", "skill": "account_summary", "version": "1", "input": {"account_number": "ACC-1001"}, "expect": {"error": "authz_deny"}}
+{"id": "crm-04", "user": "bob", "skill": "account_summary", "version": "1", "input": {"account_number": "ACC-1002"}, "expect": {"path": "account.region", "equals": "west"}}
+{"id": "crm-05", "user": "alice", "skill": "account_summary", "version": "2", "input": {"customer": {"account_number": "ACC-1001"}}, "expect": {"path": "account.tier", "equals": "Gold"}}
+{"id": "crm-06", "user": "alice", "skill": "account_summary", "version": "1", "input": {"account_number": "ACC-10"}, "expect": {"error": "validation_error"}}

@@ -1,0 +1,158 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "name": "intro",
+      "content": {
+        "json": "## AI integration plane\nGateway spans and metrics from the Tool, MCP, A2A, Event and Identity gateways. A call counts as successful only when `integration.result_class == ok`; an HTTP 200 carrying a business error is `business_reject`."
+      }
+    },
+    {
+      "type": 3,
+      "name": "success_by_system",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppDependencies\n| where isnotempty(Properties[\"integration.system\"])\n| extend system = tostring(Properties[\"integration.system\"]), result = tostring(Properties[\"integration.result_class\"])\n| summarize total = count(), ok = countif(result == \"ok\") by system\n| extend success_pct = round(100.0 * ok / total, 1)\n| order by success_pct asc",
+        "size": 0,
+        "title": "Success rate by system",
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "result_classes_over_time",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppDependencies\n| where isnotempty(Properties[\"integration.result_class\"])\n| summarize calls = count() by result_class = tostring(Properties[\"integration.result_class\"]), bin(TimeGenerated, 5m)",
+        "size": 0,
+        "title": "Result classes over time (ok, business_reject, timeout, authz_deny...)",
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "timechart"
+      }
+    },
+    {
+      "type": 3,
+      "name": "p95_by_tool",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppDependencies\n| where tostring(Properties[\"service.component\"]) in (\"tool-gateway\", \"mcp-gateway\")\n| summarize p95_ms = percentile(DurationMs, 95), calls = count() by tool = tostring(Properties[\"integration.operation\"])\n| order by p95_ms desc",
+        "size": 0,
+        "title": "p95 latency by tool (ms)",
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart"
+      }
+    },
+    {
+      "type": 3,
+      "name": "poison_queue_depth",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppMetrics\n| where Name == \"queue.depth\"\n| extend queue = tostring(Properties[\"queue\"])\n| where queue endswith \"$deadletterqueue\" or queue endswith \"/parked\"\n| summarize depth = max(Max) by queue, bin(TimeGenerated, 5m)",
+        "size": 0,
+        "title": "Poison / parked queue depth (app gauge)",
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "timechart"
+      }
+    },
+    {
+      "type": 3,
+      "name": "servicebus_dead_letters",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AzureMetrics\n| where ResourceProvider == \"MICROSOFT.SERVICEBUS\" and MetricName == \"DeadletteredMessages\"\n| summarize dead_lettered = max(Maximum) by EntityName = tostring(split(ResourceId, \"/\")[-1]), bin(TimeGenerated, 5m)",
+        "size": 0,
+        "title": "Service Bus dead-lettered messages (platform metric)",
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "timechart"
+      }
+    },
+    {
+      "type": 3,
+      "name": "identity_mix",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppDependencies\n| where isnotempty(Properties[\"integration.identity_mode\"])\n| summarize calls = count() by identity_mode = tostring(Properties[\"integration.identity_mode\"])",
+        "size": 0,
+        "title": "OBO vs agent identity mix",
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "piechart"
+      }
+    },
+    {
+      "type": 3,
+      "name": "business_rejects_http_200",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppDependencies\n| where tostring(Properties[\"integration.result_class\"]) == \"business_reject\"\n| project TimeGenerated, system = tostring(Properties[\"integration.system\"]), operation = tostring(Properties[\"integration.operation\"]), business_key = tostring(Properties[\"integration.business_key\"]), vendor_code = tostring(Properties[\"integration.vendor_code\"]), actor = tostring(Properties[\"integration.actor\"])\n| order by TimeGenerated desc",
+        "size": 0,
+        "title": "Business rejects (HTTP 200 with error payload)",
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "process_completions",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppMetrics\n| where Name == \"process.completions\"\n| summarize completions = sum(Sum) by process = tostring(Properties[\"process\"]), outcome = tostring(Properties[\"outcome\"])",
+        "size": 0,
+        "title": "Process completions by outcome",
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart"
+      }
+    },
+    {
+      "type": 3,
+      "name": "who_did_what",
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "AppDependencies\n| where isnotempty(Properties[\"integration.business_key\"])\n| project TimeGenerated, actor = tostring(Properties[\"integration.actor\"]), subject = tostring(Properties[\"integration.subject\"]), mode = tostring(Properties[\"integration.identity_mode\"]), operation = tostring(Properties[\"integration.operation\"]), business_key = tostring(Properties[\"integration.business_key\"]), result = tostring(Properties[\"integration.result_class\"]), OperationId\n| order by TimeGenerated desc",
+        "size": 0,
+        "title": "Audit view: who did what to which business key",
+        "timeContext": {
+          "durationMs": 86400000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      }
+    }
+  ],
+  "fallbackResourceIds": [],
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

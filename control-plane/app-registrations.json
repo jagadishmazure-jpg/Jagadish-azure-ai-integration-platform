@@ -1,0 +1,229 @@
+{
+  "note": "Plan for one Entra app registration per workload. client_id values are local placeholders; the real ones come from `az ad app create` (docs/identity.md).",
+  "registrations": [
+    {
+      "app_id_uri": "api://aiip-experience-bff",
+      "app_roles": {},
+      "client_id": "076dde4f-ecc7-56c8-918a-00c8f72cae9d",
+      "description": "Care-rep web app (public client, auth code + PKCE). Signs the user in; holds no downstream rights.",
+      "kind": "client",
+      "managed_identity": "id-experience-bff",
+      "name": "experience-bff",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-care-planner",
+      "app_roles": {},
+      "client_id": "af955157-45f5-5b5f-9e59-a146ff72fd93",
+      "description": "Customer-care planner. Interactive; acts as the signed-in user.",
+      "kind": "agent",
+      "managed_identity": "id-care-planner",
+      "name": "care-planner",
+      "obo_targets": [
+        "api://aiip-crm-agent",
+        "api://aiip-erp-agent",
+        "api://aiip-data-agent"
+      ]
+    },
+    {
+      "app_id_uri": "api://aiip-crm-agent",
+      "app_roles": {},
+      "client_id": "13d6a5d0-0d70-553e-b82c-4689ce000737",
+      "description": "CRM domain agent (Salesforce stand-in). User-scoped only: no app roles on CRM tools.",
+      "kind": "agent",
+      "managed_identity": "id-crm-agent",
+      "name": "crm-agent",
+      "obo_targets": [
+        "api://aiip-tool-gateway"
+      ]
+    },
+    {
+      "app_id_uri": "api://aiip-erp-agent",
+      "app_roles": {
+        "api://aiip-mcp-gateway": [
+          "Orders.Read"
+        ],
+        "api://aiip-tool-gateway": [
+          "Orders.Read"
+        ]
+      },
+      "client_id": "5442e89c-020b-5163-b527-0f1406436204",
+      "description": "ERP/SAP domain agent. Hybrid: user token for customer data, own identity for order reference data.",
+      "kind": "agent",
+      "managed_identity": "id-erp-agent",
+      "name": "erp-agent",
+      "obo_targets": [
+        "api://aiip-tool-gateway"
+      ]
+    },
+    {
+      "app_id_uri": "api://aiip-data-agent",
+      "app_roles": {
+        "api://aiip-mcp-gateway": [
+          "Analytics.Read"
+        ]
+      },
+      "client_id": "aa0f8e90-c3b5-5bbb-a8db-610e21b920b7",
+      "description": "Analytics agent. Reads shared KPI tables through the MCP gateway with its own identity.",
+      "kind": "agent",
+      "managed_identity": "id-data-agent",
+      "name": "data-agent",
+      "obo_targets": [
+        "api://aiip-mcp-gateway"
+      ]
+    },
+    {
+      "app_id_uri": "api://aiip-ap-invoice-agent",
+      "app_roles": {
+        "api://aiip-tool-gateway": [
+          "PurchaseOrders.Read"
+        ]
+      },
+      "client_id": "acdbf8a1-3f28-5b55-b9eb-e6a0d5fa1bc6",
+      "description": "Accounts-payable language agent (extract, classify, draft). Called by the BPM as an activity.",
+      "kind": "agent",
+      "managed_identity": "id-ap-invoice-agent",
+      "name": "ap-invoice-agent",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-worker-order-events",
+      "app_roles": {
+        "api://aiip-event-gateway": [
+          "Events.Publish"
+        ],
+        "api://aiip-mcp-gateway": [
+          "Incidents.Read",
+          "Incidents.Write"
+        ],
+        "api://aiip-tool-gateway": [
+          "Orders.Read",
+          "Accounts.Read.All",
+          "Incidents.Write"
+        ]
+      },
+      "client_id": "23e090cd-c439-5ddc-ad24-80c4b628774b",
+      "description": "Event worker for OrderCreated. Agent-scoped, no user.",
+      "kind": "worker",
+      "managed_identity": "id-worker-order-events",
+      "name": "worker-order-events",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-worker-shipment-events",
+      "app_roles": {
+        "api://aiip-ap-invoice-agent": [
+          "Agent.Invoke"
+        ],
+        "api://aiip-event-gateway": [
+          "Events.Publish"
+        ],
+        "api://aiip-tool-gateway": [
+          "Orders.Read",
+          "Shipments.Read",
+          "Orders.Simulate",
+          "Cases.Write"
+        ]
+      },
+      "client_id": "321f4b29-7772-5e7f-9663-ab8c73ef40d7",
+      "description": "Event worker for ShipmentLate. Agent-scoped, no user.",
+      "kind": "worker",
+      "managed_identity": "id-worker-shipment-events",
+      "name": "worker-shipment-events",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-bpm-invoice-orchestrator",
+      "app_roles": {
+        "api://aiip-ap-invoice-agent": [
+          "Agent.Invoke"
+        ],
+        "api://aiip-event-gateway": [
+          "Events.Publish"
+        ],
+        "api://aiip-tool-gateway": [
+          "Invoices.Write",
+          "PurchaseOrders.Read",
+          "Workers.Read",
+          "Incidents.Write"
+        ]
+      },
+      "client_id": "0ce7c8f0-9bb6-5ced-93a9-b6b7bf40acab",
+      "description": "Durable Functions parent for vendor invoices. Agent-scoped; approver recorded as subject.",
+      "kind": "orchestrator",
+      "managed_identity": "id-bpm-invoice-orchestrator",
+      "name": "bpm-invoice-orchestrator",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-sap-integration-suite",
+      "app_roles": {
+        "api://aiip-event-gateway": [
+          "Events.Publish"
+        ]
+      },
+      "client_id": "891de15d-cdfc-5d54-8c46-1aa463c5f65b",
+      "description": "SAP middleware (Integration Suite / Event Mesh bridge) publishing canonical business events.",
+      "kind": "publisher",
+      "managed_identity": "id-sap-integration-suite",
+      "name": "sap-integration-suite",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-tool-gateway",
+      "app_roles": {},
+      "client_id": "893f1d12-f406-59ec-b3b6-062b332854df",
+      "description": "Tool Gateway. Middle tier for Dataverse OBO pass-through.",
+      "kind": "gateway",
+      "managed_identity": "id-tool-gateway",
+      "name": "tool-gateway",
+      "obo_targets": [
+        "https://contoso.crm.dynamics.com"
+      ]
+    },
+    {
+      "app_id_uri": "api://aiip-mcp-gateway",
+      "app_roles": {
+        "api://aiip-mcp-servers": [
+          "McpServer.Invoke"
+        ]
+      },
+      "client_id": "eeba1b7f-c63b-5e30-8821-d5f04ada1eb7",
+      "description": "MCP Gateway. Calls MCP servers with its own identity.",
+      "kind": "gateway",
+      "managed_identity": "id-mcp-gateway",
+      "name": "mcp-gateway",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-event-gateway",
+      "app_roles": {},
+      "client_id": "aae437b7-b16e-555d-8a99-1b04fc4ae447",
+      "description": "Event Gateway. Validates and routes canonical business events.",
+      "kind": "gateway",
+      "managed_identity": "id-event-gateway",
+      "name": "event-gateway",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-a2a-gateway",
+      "app_roles": {},
+      "client_id": "0ac8441b-137b-582b-8a1b-dbd834df482d",
+      "description": "A2A Gateway. Forwards caller tokens; holds no downstream rights of its own.",
+      "kind": "gateway",
+      "managed_identity": "id-a2a-gateway",
+      "name": "a2a-gateway",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-identity-gateway",
+      "app_roles": {},
+      "client_id": "3ee937f5-9b04-58e4-9a8b-6d32bdfbaacd",
+      "description": "Identity Gateway API (api://aiip-identity-gateway). Workloads present their managed-identity token for this audience; the gateway's own MI is the federated credential of every agent registration.",
+      "kind": "gateway",
+      "managed_identity": "id-identity-gateway",
+      "name": "identity-gateway",
+      "obo_targets": []
+    }
+  ]
+}

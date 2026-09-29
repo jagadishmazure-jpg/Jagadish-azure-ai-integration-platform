@@ -1,0 +1,97 @@
+{
+  "capabilities": {
+    "extensions": [
+      {
+        "description": "Integration contract: owner, SLA, side effects, callers, schemas, eval score",
+        "params": {
+          "agent_id": "crm-agent",
+          "allowed_callers": [
+            "care-planner"
+          ],
+          "eval_score": 1.0,
+          "identity_mode": "obo",
+          "owner": "Jagadish Meduri (integration engineering)",
+          "requires_headers": [
+            "authorization",
+            "traceparent",
+            "x-tenant-id",
+            "A2A-Version"
+          ],
+          "side_effect_class": "read",
+          "skills": {
+            "account_summary": {
+              "hitl": false,
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "customer": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "account_number": {
+                        "pattern": "^ACC-[0-9]{4}$",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "account_number"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customer"
+                ],
+                "type": "object"
+              },
+              "side_effect": "read"
+            }
+          },
+          "sla": {
+            "availability": "99.5%",
+            "p95_ms": 1500.0
+          },
+          "system_of_record": "salesforce, dataverse",
+          "version": "2.0.0"
+        },
+        "uri": "urn:aiip:integration-contract:v1"
+      }
+    ],
+    "streaming": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "description": "v2 contract: `customer` object replaces `account_number`. Published alongside v1 during migration.",
+  "name": "CRM agent",
+  "provider": {
+    "organization": "AI Integration Platform (demo)",
+    "url": "https://github.com/jagadishmazure-jpg"
+  },
+  "skills": [
+    {
+      "description": "Account plus open cases (v2 input shape). [side-effect: read]",
+      "id": "account_summary",
+      "inputModes": [
+        "application/json"
+      ],
+      "name": "Account summary",
+      "outputModes": [
+        "application/json"
+      ],
+      "tags": [
+        "read"
+      ]
+    }
+  ],
+  "supportedInterfaces": [
+    {
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0",
+      "url": "http://agent-crm.inproc/v2/a2a"
+    }
+  ],
+  "version": "2.0.0"
+}

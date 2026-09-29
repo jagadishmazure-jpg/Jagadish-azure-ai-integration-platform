@@ -1,0 +1,127 @@
+{
+  "capabilities": {
+    "extensions": [
+      {
+        "description": "Integration contract: owner, SLA, side effects, callers, schemas, eval score",
+        "params": {
+          "agent_id": "erp-agent",
+          "allowed_callers": [
+            "care-planner"
+          ],
+          "eval_score": 1.0,
+          "identity_mode": "hybrid",
+          "owner": "Jagadish Meduri (integration engineering)",
+          "requires_headers": [
+            "authorization",
+            "traceparent",
+            "x-tenant-id",
+            "A2A-Version"
+          ],
+          "side_effect_class": "simulate",
+          "skills": {
+            "order_status": {
+              "hitl": false,
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "delivery_id": {
+                    "type": "string"
+                  },
+                  "order_id": {
+                    "pattern": "^[0-9]{7}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "order_id"
+                ],
+                "type": "object"
+              },
+              "side_effect": "read"
+            },
+            "simulate_order": {
+              "hitl": false,
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "customer_ref": {
+                    "pattern": "^ACC-[0-9]{4}$",
+                    "type": "string"
+                  },
+                  "items": {
+                    "minItems": 1.0,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "customer_ref",
+                  "items"
+                ],
+                "type": "object"
+              },
+              "side_effect": "simulate"
+            }
+          },
+          "sla": {
+            "availability": "99.5%",
+            "p95_ms": 2500.0
+          },
+          "system_of_record": "sap",
+          "version": "1.1.0"
+        },
+        "uri": "urn:aiip:integration-contract:v1"
+      }
+    ],
+    "streaming": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "description": "Owns SAP sales-order and delivery semantics (status codes, simulation). Hybrid identity.",
+  "name": "ERP / SAP agent",
+  "provider": {
+    "organization": "AI Integration Platform (demo)",
+    "url": "https://github.com/jagadishmazure-jpg"
+  },
+  "skills": [
+    {
+      "description": "Sales order plus delivery status in business terms. [side-effect: read]",
+      "id": "order_status",
+      "inputModes": [
+        "application/json"
+      ],
+      "name": "Order status",
+      "outputModes": [
+        "application/json"
+      ],
+      "tags": [
+        "read"
+      ]
+    },
+    {
+      "description": "Price a proposed order without persisting it. [side-effect: simulate]",
+      "id": "simulate_order",
+      "inputModes": [
+        "application/json"
+      ],
+      "name": "Simulate order",
+      "outputModes": [
+        "application/json"
+      ],
+      "tags": [
+        "simulate"
+      ]
+    }
+  ],
+  "supportedInterfaces": [
+    {
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0",
+      "url": "http://agent-erp.inproc/a2a"
+    }
+  ],
+  "version": "1.1.0"
+}

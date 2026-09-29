@@ -1,0 +1,161 @@
+{
+  "capabilities": {
+    "extensions": [
+      {
+        "description": "Integration contract: owner, SLA, side effects, callers, schemas, eval score",
+        "params": {
+          "agent_id": "ap-invoice-agent",
+          "allowed_callers": [
+            "bpm-invoice-orchestrator",
+            "worker-shipment-events"
+          ],
+          "eval_score": 1.0,
+          "identity_mode": "agent",
+          "owner": "Jagadish Meduri (integration engineering)",
+          "requires_headers": [
+            "authorization",
+            "traceparent",
+            "x-tenant-id",
+            "A2A-Version"
+          ],
+          "side_effect_class": "read",
+          "skills": {
+            "classify": {
+              "hitl": false,
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "invoice": {
+                    "type": "object"
+                  },
+                  "po_total": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "invoice"
+                ],
+                "type": "object"
+              },
+              "side_effect": "read"
+            },
+            "draft": {
+              "hitl": false,
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "facts": {
+                    "type": "object"
+                  },
+                  "kind": {
+                    "enum": [
+                      "approval_request",
+                      "rejection",
+                      "remittance",
+                      "delay_notice"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind",
+                  "facts"
+                ],
+                "type": "object"
+              },
+              "side_effect": "read"
+            },
+            "extract": {
+              "hitl": false,
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "text": {
+                    "maxLength": 4000.0,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "text"
+                ],
+                "type": "object"
+              },
+              "side_effect": "read"
+            }
+          },
+          "sla": {
+            "availability": "99.5%",
+            "p95_ms": 3000.0
+          },
+          "system_of_record": "",
+          "version": "1.0.0"
+        },
+        "uri": "urn:aiip:integration-contract:v1"
+      }
+    ],
+    "streaming": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "description": "Language steps for accounts payable: extract fields, classify, draft notes. No commits.",
+  "name": "AP invoice agent",
+  "provider": {
+    "organization": "AI Integration Platform (demo)",
+    "url": "https://github.com/jagadishmazure-jpg"
+  },
+  "skills": [
+    {
+      "description": "Pull invoice fields from vendor text. [side-effect: read]",
+      "id": "extract",
+      "inputModes": [
+        "application/json"
+      ],
+      "name": "Extract",
+      "outputModes": [
+        "application/json"
+      ],
+      "tags": [
+        "read"
+      ]
+    },
+    {
+      "description": "Route an invoice: auto, review or reject. [side-effect: read]",
+      "id": "classify",
+      "inputModes": [
+        "application/json"
+      ],
+      "name": "Classify",
+      "outputModes": [
+        "application/json"
+      ],
+      "tags": [
+        "read"
+      ]
+    },
+    {
+      "description": "Draft a vendor or approver note from structured facts. [side-effect: read]",
+      "id": "draft",
+      "inputModes": [
+        "application/json"
+      ],
+      "name": "Draft note",
+      "outputModes": [
+        "application/json"
+      ],
+      "tags": [
+        "read"
+      ]
+    }
+  ],
+  "supportedInterfaces": [
+    {
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0",
+      "url": "http://agent-ap-invoice.inproc/a2a"
+    }
+  ],
+  "version": "1.0.0"
+}

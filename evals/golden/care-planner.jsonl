@@ -1,0 +1,5 @@
+{"id": "care-01", "user": "alice", "skill": "resolve_customer_request", "input": {"account_number": "ACC-1001", "order_id": "4500001", "question": "Where is my order?"}, "expect": {"path": "answer", "contains": "7 day(s) late"}}
+{"id": "care-02", "user": "alice", "skill": "resolve_customer_request", "input": {"account_number": "ACC-1001", "order_id": "4500001", "question": "Where is my order?"}, "expect": {"path": "fan_out", "equals": ["crm", "data", "erp"]}}
+{"id": "care-03", "user": "bob", "skill": "resolve_customer_request", "input": {"account_number": "ACC-1001", "question": "Account status?"}, "expect": {"path": "result_class", "equals": "authz_deny"}}
+{"id": "care-04", "user": "alice", "skill": "resolve_customer_request", "input": {"account_number": "ACC-1001", "order_id": "4500001", "question": "Late?", "open_case": true}, "expect": {"path": "case.case.case_id", "startswith": "500"}}
+{"id": "care-05", "user": "bob", "skill": "resolve_customer_request", "input": {"account_number": "ACC-1002", "order_id": "4500002", "question": "Status?"}, "expect": {"path": "acting_as", "equals": "bob@contoso.example"}}

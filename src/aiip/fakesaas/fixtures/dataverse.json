@@ -1,0 +1,8 @@
+{
+  "entitlements": [
+    {"entitlementid": "e0000001-0000-0000-0000-000000000001", "name": "Gold 4h response", "_customerid_value": "ACC-1001", "region": "east", "slaresponsehours": 4, "statecode": 0},
+    {"entitlementid": "e0000001-0000-0000-0000-000000000002", "name": "Silver 8h response", "_customerid_value": "ACC-1002", "region": "west", "slaresponsehours": 8, "statecode": 0},
+    {"entitlementid": "e0000001-0000-0000-0000-000000000003", "name": "Bronze 24h response", "_customerid_value": "ACC-1003", "region": "east", "slaresponsehours": 24, "statecode": 0}
+  ],
+  "incidents": {}
+}

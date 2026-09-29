@@ -1,0 +1,6 @@
+{
+  "workers": {
+    "W-100": {"id": "W-100", "descriptor": "Carol Approver", "primaryWorkEmail": "carol@contoso.example", "businessTitle": "AP Manager", "costCenter": {"id": "CC-100", "descriptor": "Finance Operations"}, "manager": {"id": "W-001", "descriptor": "Finance Director"}, "isManager": true, "approvalLimit": {"currency": "USD", "amount": 50000}, "nationalId": "000-00-0000", "dateOfBirth": "1980-01-01", "compensation": {"basePay": 1, "currency": "USD"}, "homeAddress": "redacted-fixture"},
+    "W-200": {"id": "W-200", "descriptor": "Sam Clerk", "primaryWorkEmail": "sam@contoso.example", "businessTitle": "AP Clerk", "costCenter": {"id": "CC-100", "descriptor": "Finance Operations"}, "manager": {"id": "W-100", "descriptor": "Carol Approver"}, "isManager": false, "approvalLimit": {"currency": "USD", "amount": 0}, "nationalId": "000-00-0001", "dateOfBirth": "1990-01-01", "compensation": {"basePay": 1, "currency": "USD"}, "homeAddress": "redacted-fixture"}
+  }
+}

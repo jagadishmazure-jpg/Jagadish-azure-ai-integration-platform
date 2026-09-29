@@ -1,0 +1,18 @@
+{
+  "users": {
+    "alice@contoso.example": {"region": "east", "view_all": false},
+    "bob@contoso.example": {"region": "west", "view_all": false},
+    "dave@fabrikam.example": {"region": "east", "view_all": false},
+    "svc-worker-order-events@integration.example": {"region": "*", "view_all": true},
+    "svc-worker-shipment-events@integration.example": {"region": "*", "view_all": true},
+    "svc-bpm-invoice-orchestrator@integration.example": {"region": "*", "view_all": false}
+  },
+  "accounts": {
+    "001A000001": {"Id": "001A000001", "AccountNumber": "ACC-1001", "Name": "Northwind Traders", "Tier__c": "Gold", "Region__c": "east", "Credit_Hold__c": false, "Phone": "+1-555-0100", "BillingCity": "Boston", "AnnualRevenue": 12500000, "Tax_Id__c": "XX-REDACTED-01", "OwnerId": "005A0000AL"},
+    "001A000002": {"Id": "001A000002", "AccountNumber": "ACC-1002", "Name": "Westwind Outfitters", "Tier__c": "Silver", "Region__c": "west", "Credit_Hold__c": false, "Phone": "+1-555-0101", "BillingCity": "Seattle", "AnnualRevenue": 4800000, "Tax_Id__c": "XX-REDACTED-02", "OwnerId": "005A0000BO"},
+    "001A000003": {"Id": "001A000003", "AccountNumber": "ACC-1003", "Name": "Blue Yonder Retail", "Tier__c": "Bronze", "Region__c": "east", "Credit_Hold__c": true, "Phone": "+1-555-0102", "BillingCity": "Newark", "AnnualRevenue": 900000, "Tax_Id__c": "XX-REDACTED-03", "OwnerId": "005A0000AL"}
+  },
+  "cases": {
+    "500A000001": {"Id": "500A000001", "CaseNumber": "00001001", "AccountId": "001A000001", "Subject": "Damaged pallet on last delivery", "Status": "Closed", "Priority": "Medium", "External_Id__c": null}
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "sales_orders": {
+    "4500001": {"SalesOrder": "4500001", "SoldToParty": "ACC-1001", "SalesOrderType": "OR", "TotalNetAmount": "18450.00", "TransactionCurrency": "USD", "OverallSDProcessStatus": "B", "OverallDeliveryStatus": "A", "RequestedDeliveryDate": "2026-09-20", "PurchaseOrderByCustomer": "NW-PO-8812"},
+    "4500002": {"SalesOrder": "4500002", "SoldToParty": "ACC-1002", "SalesOrderType": "OR", "TotalNetAmount": "7200.00", "TransactionCurrency": "USD", "OverallSDProcessStatus": "A", "OverallDeliveryStatus": "A", "RequestedDeliveryDate": "2026-10-02", "PurchaseOrderByCustomer": "WW-PO-1203"},
+    "4500003": {"SalesOrder": "4500003", "SoldToParty": "ACC-1003", "SalesOrderType": "OR", "TotalNetAmount": "3100.00", "TransactionCurrency": "USD", "OverallSDProcessStatus": "A", "OverallDeliveryStatus": "A", "RequestedDeliveryDate": "2026-10-05", "PurchaseOrderByCustomer": "BY-PO-0042"}
+  },
+  "deliveries": {
+    "80000001": {"DeliveryDocument": "80000001", "ReferenceSDDocument": "4500001", "ShippingPoint": "1000", "PlannedGoodsIssueDate": "2026-09-18", "DeliveryDate": "2026-09-20", "RevisedDeliveryDate": "2026-09-27", "OverallGoodsMovementStatus": "B", "Carrier": "CARRIER-07"},
+    "80000002": {"DeliveryDocument": "80000002", "ReferenceSDDocument": "4500002", "ShippingPoint": "1000", "PlannedGoodsIssueDate": "2026-09-30", "DeliveryDate": "2026-10-02", "RevisedDeliveryDate": "2026-10-04", "OverallGoodsMovementStatus": "A", "Carrier": "CARRIER-02"}
+  },
+  "purchase_orders": {
+    "4500009001": {"PurchaseOrder": "4500009001", "Supplier": "V-44", "CompanyCode": "1000", "DocumentCurrency": "USD", "PurchasingGroup": "P01", "CostCenter": "CC-100", "to_PurchaseOrderItem": {"results": [{"PurchaseOrderItem": "10", "Material": "MAT-STEEL-01", "OrderQuantity": "100", "NetPriceAmount": "120.00"}]}},
+    "4500009002": {"PurchaseOrder": "4500009002", "Supplier": "V-51", "CompanyCode": "1000", "DocumentCurrency": "USD", "PurchasingGroup": "P01", "CostCenter": "CC-100", "to_PurchaseOrderItem": {"results": [{"PurchaseOrderItem": "10", "Material": "MAT-BOLT-07", "OrderQuantity": "500", "NetPriceAmount": "2.40"}]}}
+  },
+  "valid_tax_codes": ["V0", "V1", "I1"],
+  "materials": {"MAT-STEEL-01": "120.00", "MAT-BOLT-07": "2.40", "MAT-PALLET-02": "35.00"}
+}

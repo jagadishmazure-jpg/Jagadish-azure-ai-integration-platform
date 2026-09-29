@@ -1,0 +1,46 @@
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13", cache: pip }
+      - run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check . && ruff format --check .
+      - name: Tests (offline, in-process services, sandbox stand-ins)
+        run: pytest -q
+      - name: Eval + contract gate (golden sets)
+        run: python scripts/run_eval_gate.py --no-write
+      - name: Control-plane contracts are current
+        run: python scripts/export_contracts.py --check
+      - name: Dashboards are generated from the KQL
+        run: python scripts/build_dashboards.py --check
+      - name: Functions app indexes (Python v2 programming model)
+        working-directory: functions
+        run: python -c "import function_app as f; print([x.get_function_name() for x in f.app.get_functions()])"
+      - name: End-to-end demo over real HTTP (15 local processes)
+        run: python scripts/demo.py --out .demo-logs/demo-results.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: demo-logs, path: .demo-logs, if-no-files-found: ignore }
+  bicep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Bicep CLI (pinned)
+        run: |
+          curl -sSLo bicep https://github.com/Azure/bicep/releases/download/v0.47.16/bicep-linux-x64
+          chmod +x bicep && sudo mv bicep /usr/local/bin/bicep && bicep --version
+      - name: bicep build (linter runs as part of build; warnings fail the job)
+        run: |
+          bicep build infra/main.bicep --stdout > /dev/null 2> bicep.log || { cat bicep.log; exit 1; }
+          cat bicep.log
+          if grep -q "Warning" bicep.log; then exit 1; fi

@@ -1,0 +1,47 @@
+# Manual deployment with azd over GitHub OIDC (workload identity federation). No stored secrets.
+# DISABLED unless the repository variable ENABLE_DEPLOY is 'true'. Nothing in this repository has
+# been deployed by CI; see docs/deploy.md for the one-time setup.
+#
+# Federated credential subject:
+#   repo:jagadishmazure-jpg/Jagadish-azure-ai-integration-platform:environment:dev
+name: deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment: { description: "azd environment name", required: true, default: "aiip-dev" }
+      location: { description: "Azure region", required: true, default: "eastus2" }
+      teardown: { description: "Run azd down --purge instead of up", type: boolean, default: false }
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  deploy:
+    if: ${{ vars.ENABLE_DEPLOY == 'true' }}
+    runs-on: ubuntu-latest
+    environment: dev
+    env:
+      AZURE_ENV_NAME: ${{ inputs.environment }}
+      AZURE_LOCATION: ${{ inputs.location }}
+      AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.13" }
+      - uses: Azure/setup-azd@v2
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: azd login (federated)
+        run: azd auth login --client-id "$AZURE_CLIENT_ID" --federated-credential-provider github --tenant-id "$AZURE_TENANT_ID"
+      - name: Select environment
+        run: azd env new "$AZURE_ENV_NAME" --location "$AZURE_LOCATION" --subscription "$AZURE_SUBSCRIPTION_ID" --no-prompt || azd env select "$AZURE_ENV_NAME"
+      - name: Provision + deploy
+        if: ${{ !inputs.teardown }}
+        run: azd up --no-prompt
+      - name: Teardown
+        if: ${{ inputs.teardown }}
+        run: azd down --purge --force --no-prompt

@@ -18,4 +18,5 @@ The platform code. Every subpackage is one part of the integration plane; `share
 | [`bpm/`](bpm/) | Durable vendor-invoice orchestration, activities, local replay runtime |
 | [`connectors/`](connectors/) | SaaS connector packs (Salesforce, ServiceNow, Workday, Dataverse, SAP OData, Jira) |
 | [`fakesaas/`](fakesaas/) | Sandbox stand-ins for the vendor APIs (not the real vendors) |
+| [`safety/`](safety/) | Runtime safety layer: sandbox, policy prover, supervisor, out-of-band monitor, kill switch |
 | [`shared/`](shared/) | Auth, secrets, telemetry, audit, resilience, errors, schema, untrusted-content screening |

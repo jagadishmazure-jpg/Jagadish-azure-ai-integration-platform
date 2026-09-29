@@ -1,0 +1,83 @@
+# Runtime-safety policy. Evaluated by aiip.safety.policy before every supervised action.
+# Default deny: an action kind or target that no allow rule covers is refused.
+# Facts available to rules are computed by the supervisor (aiip.safety.supervisor):
+#   all:      actor, identity_mode, tenant, payload_classes
+#   tool:     tool, known_tool, on_agent_card, side_effect
+#   sandbox:  tool, network, read_paths_scoped
+#   data:     source, classification
+#   model:    model, max_tokens
+#   outbound: channel, destination
+version: "2026-09-29.1"
+default: deny
+
+rules:
+  # ---- deny rules win over any allow rule
+  - id: egress.no-sensitive-payloads
+    action: "*"
+    effect: deny
+    description: Nothing that looks like a secret or regulated personal data leaves through any action.
+    when:
+      payload_classes:
+        intersects: [pii.us_ssn, pii.payment_card, secret.jwt, secret.private_key, secret.assignment, secret.conn_string]
+
+  - id: data.restricted-collections
+    action: data
+    effect: deny
+    description: HR, payroll and credential collections are never agent-readable.
+    when:
+      source:
+        glob: "kb://restricted/*"
+
+  # ---- allow rules
+  - id: tool.on-agent-card
+    action: tool
+    effect: allow
+    description: A registered tool that the caller's agent card lists (the Tool Gateway re-checks identity and roles).
+    when:
+      known_tool: true
+      on_agent_card: true
+      side_effect: [read, simulate, commit]
+
+  - id: sandbox.registered-tools-offline
+    action: sandbox
+    effect: allow
+    description: Registered sandbox tools only, with networking off and file access inside the declared scope.
+    when:
+      tool: [sandbox.python, sandbox.csv_stats]
+      network: false
+      read_paths_scoped: true
+
+  - id: data.knowledge-base
+    action: data
+    effect: allow
+    description: Public and internal knowledge-base collections.
+    when:
+      source:
+        glob: "kb://*"
+      classification: [public, internal]
+
+  - id: model.approved-deployments
+    action: model
+    effect: allow
+    description: Only reviewed model deployments, with a bounded completion size.
+    when:
+      model: [gpt-4.1-mini, gpt-4o-mini]
+      max_tokens:
+        max: 4096
+
+  - id: outbound.internal-channels
+    action: outbound
+    effect: allow
+    description: Messages go to the tenant's own Teams channels only.
+    when:
+      channel: teams
+      destination:
+        glob: "teams://contoso/*"
+
+# Expected behaviour per agent, read by the out-of-band monitor's drift detector.
+# Tools default to the agent card allow-list; models default to `default.models`.
+baselines:
+  default:
+    models: [gpt-4.1-mini]
+  crm-agent:
+    models: [gpt-4.1-mini, gpt-4o-mini]

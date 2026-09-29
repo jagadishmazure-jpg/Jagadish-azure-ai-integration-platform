@@ -26,6 +26,7 @@ NOT_FOUND = "not_found"
 CONFLICT = "conflict"
 APPROVAL_REQUIRED = "approval_required"
 INTERNAL = "internal_error"
+QUARANTINED = "quarantined"  # runtime-safety kill switch engaged for this agent/session
 
 HTTP_STATUS = {
     BUSINESS_REJECT: 422,
@@ -40,6 +41,7 @@ HTTP_STATUS = {
     CONFLICT: 409,
     APPROVAL_REQUIRED: 428,
     INTERNAL: 500,
+    QUARANTINED: 423,
 }
 
 

@@ -7,7 +7,7 @@ What every gateway shares.
 | [`auth.py`](auth.py) | Entra JWT validation (RS256/JWKS, audience, issuer per tenant, tenant allow-list); Principal with actor + subject |
 | [`secrets.py`](secrets.py) | `kv://` references resolved locally or from Key Vault; guard against raw secrets in config |
 | [`telemetry.py`](telemetry.py) | OpenTelemetry setup, `integration_span`, result classes, metrics, Azure Monitor exporter |
-| [`audit.py`](audit.py) | Append-only hash-chained audit log |
+| [`audit.py`](audit.py) | Append-only hash-chained audit log, Ed25519-signed per record (trusted telemetry), read-only subscription for the out-of-band monitor |
 | [`resilience.py`](resilience.py) | Per-tenant token bucket, short-TTL cache, circuit breaker (injectable clocks) |
 | [`approvals.py`](approvals.py) | HITL approvals bound to tool, business key and exact arguments |
 | [`errors.py`](errors.py) | Sanitized error model returned to agents |

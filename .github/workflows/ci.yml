@@ -19,6 +19,8 @@ jobs:
         run: pytest -q
       - name: Eval + contract gate (golden sets)
         run: python scripts/run_eval_gate.py --no-write
+      - name: Runtime-safety gate (attacks contained, no false quarantines)
+        run: python scripts/run_safety_evals.py --no-write
       - name: Control-plane contracts are current
         run: python scripts/export_contracts.py --check
       - name: Dashboards are generated from the KQL

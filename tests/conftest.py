@@ -24,6 +24,10 @@ def reset_all():
     from aiip.events import gateway as ev_gw
     from aiip.fakesaas import state
     from aiip.mcp import gateway as mcp_gw
+    from aiip.safety import stand_ins
+    from aiip.safety.killswitch import KILL
+    from aiip.safety.supervisor import TELEMETRY
+    from aiip.safety.tap import TAP
     from aiip.shared import telemetry
     from aiip.tools import gateway as tool_gw
 
@@ -35,6 +39,8 @@ def reset_all():
     a2a_gw.AUDIT.reset()
     telemetry.LEDGER.reset()
     telemetry.clear_spans()
+    for x in (KILL, TELEMETRY, TAP, stand_ins):
+        x.reset()
     yield
     state.FAULTS.clear()
 

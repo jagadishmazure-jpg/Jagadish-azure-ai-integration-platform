@@ -25,6 +25,7 @@ from aiip.a2a.specs import allowed_mcp_servers
 from aiip.identity.client import IdentityClient
 from aiip.identity.registrations import MCP_GW, MCP_SERVERS
 from aiip.mcp.catalog import SERVERS, ServerEntry
+from aiip.safety.killswitch import KILL
 from aiip.shared import errors as E
 from aiip.shared import telemetry
 from aiip.shared.approvals import ApprovalStore
@@ -147,6 +148,7 @@ async def call(
     idempotency_key: str | None = Header(default=None),
     x_approval_id: str | None = Header(default=None),
     traceparent: str | None = Header(default=None),
+    x_agent_session: str | None = Header(default=None),
 ):
     entry = _entry(server)
     args = dict(body.arguments)
@@ -165,6 +167,7 @@ async def call(
         "business_key": bkey,
         "trace_id": trace_id(traceparent),
         "args_digest": digest(args),
+        "session": x_agent_session,
     }
     with telemetry.integration_span(
         f"mcp {server}.{tool}",
@@ -179,6 +182,7 @@ async def call(
         traceparent=traceparent,
     ) as span:
         try:
+            KILL.enforce(p.tenant, p.actor, x_agent_session)  # runtime-safety quarantine
             out = await _call(entry, tool, args, p, idempotency_key, x_approval_id, span)
         except E.GatewayError as exc:
             span.set_result(exc.code)

@@ -18,6 +18,7 @@ dependencies = [
   "httpx==0.28.1",
   "pydantic==2.13.5",
   "jsonschema==4.26.0",
+  "pyyaml==6.0.3",                   # runtime-safety policy + scenarios (already pulled in by fastapi/uvicorn extras)
   "pyjwt[crypto]==2.15.0",
   "cryptography==50.0.1",
   "msal==1.39.0",

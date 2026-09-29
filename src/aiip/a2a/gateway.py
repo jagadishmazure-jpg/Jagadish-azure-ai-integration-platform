@@ -19,6 +19,7 @@ from aiip.a2a import directory
 from aiip.a2a.cards import card_json
 from aiip.a2a.specs import AGENTS
 from aiip.identity.registrations import agent_uri
+from aiip.safety.killswitch import KILL
 from aiip.shared import errors as E
 from aiip.shared import http, telemetry
 from aiip.shared.audit import AuditLog
@@ -53,6 +54,7 @@ async def proxy(
     x_tenant_id: str | None = Header(default=None),
     x_a2a_hops: str | None = Header(default=None),
     x_agent_version: str | None = Header(default=None),
+    x_agent_session: str | None = Header(default=None),
 ):
     spec = directory.resolve(agent_id, x_agent_version)
     p = await validate_token(bearer(request), agent_uri(agent_id))
@@ -80,8 +82,10 @@ async def proxy(
             "operation": f"{agent_id}.{skill_id}",
             "callee_version": spec.version,
             "trace_id": trace_id(tp),
+            "session": x_agent_session,
         }
         try:
+            KILL.enforce(p.tenant, p.actor, x_agent_session)  # runtime-safety quarantine
             if a2a_version != "1.0":
                 raise E.GatewayError(E.VALIDATION, "A2A-Version: 1.0 header required")
             directory.authorize_caller(p.actor, spec)

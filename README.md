@@ -8,7 +8,8 @@
 - **Agents act with the user's own permissions:** for interactive requests, Microsoft Entra on-behalf-of (OBO) tokens mean an agent can only see and change what the signed-in user could (background workers use their own managed identity), and every action is recorded in a tamper-evident audit trail.
 - **Reliable writes into systems of record:** repeated requests don't create duplicates (idempotency keys), circuit breakers stop calls to a failing system, and an HTTP 200 that hides a business error is still counted as a failure.
 - **Event-driven agents and human-approved business processes:** SAP events flow through Event Grid and Service Bus to agent workers, and a Durable Functions vendor-invoice process waits for a human approval (48-hour timer) before money moves.
-- **167 automated tests** plus eval and contract gates and an end-to-end demo over real HTTP run in CI.
+- **Runtime safety layer with an out-of-band watchdog:** tool code runs in a sandbox with networking off, every agent action is checked against a default-deny policy that records why it was allowed, and a separate monitor reading signed telemetry quarantines an agent within milliseconds (1-2 ms measured locally) of an injection, data leak, runaway loop or unexpected tool (9 of 9 attack scenarios contained, 0 false alarms).
+- **214 automated tests** plus eval, contract and safety gates and an end-to-end demo over real HTTP run in CI.
 
 **Skills demonstrated:** Azure integration, API gateways (APIM), Microsoft Entra ID / OAuth 2.0 OBO, Event Grid, Service Bus, Durable Functions, Logic Apps, MCP, A2A, Microsoft Agent Framework, FastAPI, Bicep/azd, Python.
 
@@ -38,6 +39,7 @@ it is **safe to repeat**, and whether the **business step actually completed**.
 | **Identity: as whom?** - OBO for interactive journeys, client credentials / managed identity for workers, hybrid; one app registration per workload; actor + subject on every record | demo steps 1-2, `tests/test_33_identity.py` |
 | **SaaS connector packs** - Salesforce, ServiceNow, Workday, Dynamics/Dataverse, SAP OData, Jira: auth, canonical mapping, idempotent writes, error taxonomy, rate-limit hints, minimal fields | `tests/test_34_saas_connectors.py` |
 | **Integration observability** - spans with system / operation / business_key / result_class; HTTP 200 with a business error counts as failure; completion metrics; Workbook + Grafana from one KQL file | demo step 10, `tests/test_35_observability.py` |
+| **Runtime safety** - agent sandbox (subprocess, deny-by-default network, scoped files, CPU/memory/time limits, env allow-list; ACA dynamic sessions adapter), policy prover (YAML, default deny, proof per decision in the audit chain), Ed25519-signed audit chains, out-of-band monitor with kill switch enforced by every gateway; attack/benign eval gate | [`src/aiip/safety/`](src/aiip/safety), `tests/test_37_runtime_safety.py`, `tests/test_38_out_of_band_monitor.py` |
 | **Reference architecture as code** - Bicep + `azd`, cost-minimized defaults, opt-in Front Door / Private Link / AKS | `infra/`, `tests/test_36_reference_architecture.py` |
 
 ## Architecture
@@ -85,7 +87,8 @@ Requires Python 3.13.
 python -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
 python scripts/demo.py            # starts 15 processes on 127.0.0.1:8401-8431, runs every drill
-pytest -q                         # offline, ~10 s
+pytest -q                         # offline, ~15 s
+python scripts/run_safety_evals.py  # attack/benign runtime-safety gate
 ```
 
 What the demo prints (abridged, from a real run):
@@ -119,19 +122,19 @@ What the demo prints (abridged, from a real run):
 
 | File | What it does |
 |---|---|
-| [`src/aiip/`](src/aiip) | The platform: `identity/`, `tools/`, `mcp/`, `mcp_servers/`, `a2a/`, `agents/`, `events/`, `bpm/`, `connectors/`, `fakesaas/`, `shared/` |
+| [`src/aiip/`](src/aiip) | The platform: `identity/`, `tools/`, `mcp/`, `mcp_servers/`, `a2a/`, `agents/`, `events/`, `bpm/`, `connectors/`, `fakesaas/`, `safety/`, `shared/` |
 | [`functions/`](functions) | Azure Functions (Python v2) app hosting the Durable vendor-invoice orchestration |
 | [`logicapps/`](logicapps) | The same process as a Logic Apps Standard workflow, for comparison |
 | [`control-plane/`](control-plane) | Generated contracts: agent cards, tool registry, MCP catalog, app registrations |
-| [`evals/`](evals) | Golden cases and scores for the eval + contract gate |
+| [`evals/`](evals) | Golden cases and scores for the eval + contract gate; runtime-safety attack/benign scenarios |
 | [`observability/`](observability) | KQL source, Azure Monitor workbook, Grafana dashboard |
 | [`infra/`](infra) | Bicep for `azd` (subscription scope, cost-minimized defaults) |
-| [`scripts/`](scripts) | Demo, eval gate, contract export, dashboard build, packaging hooks, originality check |
+| [`scripts/`](scripts) | Demo, eval gate, safety gate, contract export, dashboard build, packaging hooks, originality check |
 | [`tests/`](tests) | Offline test suite, one file per integration topic, with failure drills |
 | [`docs/`](docs) | Architecture, identity, events, BPM, connectors, observability, interview guide, SDK notes, cost, deploy |
 | [`azure.yaml`](azure.yaml) | `azd` services (one image, many commands) and hooks |
 | [`Dockerfile`](Dockerfile) | Single platform image (Python 3.13 slim, non-root) |
-| [`.github/workflows/`](.github/workflows) | CI (lint, tests, eval gate, contract/dashboard drift, demo, bicep build) and a disabled OIDC deploy |
+| [`.github/workflows/`](.github/workflows) | CI (lint, tests, eval gate, safety gate, contract/dashboard drift, demo, bicep build) and a disabled OIDC deploy |
 | [`.env.example`](.env.example) | Every setting, none of them secret |
 
 ## Industry mapping
@@ -162,7 +165,7 @@ The [interview guide](docs/interview-guide.md) maps common interview questions t
 
 | | |
 |---|---|
-| Tests | offline pytest suite, ruff clean, eval + contract gate, all in CI |
+| Tests | offline pytest suite, ruff clean, eval + contract gate, runtime-safety gate, all in CI |
 | Infra | `bicep build` clean with no warnings (CI); not deployed |
 | External systems | sandbox stand-ins only ([`src/aiip/fakesaas`](src/aiip/fakesaas)) |
 | Cost | [billing dimensions + official pricing links](docs/cost-estimate.md), no invented prices |

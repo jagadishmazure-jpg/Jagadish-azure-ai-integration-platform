@@ -26,6 +26,7 @@ from aiip.config import is_azure
 from aiip.events.bus import EventGridPublisher, InMemoryBus, Message
 from aiip.events.canonical import ENVELOPE_SCHEMA, EVENT_CLASSES
 from aiip.identity.registrations import EVENT_GW
+from aiip.safety.killswitch import KILL
 from aiip.shared import errors as E
 from aiip.shared import telemetry
 from aiip.shared.audit import AuditLog
@@ -131,6 +132,7 @@ async def admit(event: dict[str, Any], p: Principal) -> dict[str, Any]:
 
 @app.post("/v1/events")
 async def publish(request: Request, p: Principal = Depends(auth)):
+    KILL.enforce(p.tenant, p.actor, request.headers.get("x-agent-session"))  # runtime-safety quarantine
     if "Events.Publish" not in p.roles:
         raise E.GatewayError(E.AUTHZ_DENY, "publisher lacks Events.Publish")
     body = await request.json()

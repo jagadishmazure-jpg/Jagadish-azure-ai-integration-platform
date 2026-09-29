@@ -1,0 +1,147 @@
+{
+  "definition": {
+    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "toolGatewayUrl": { "type": "String", "defaultValue": "https://apim.example.net/tools" },
+      "a2aGatewayUrl": { "type": "String", "defaultValue": "https://apim.example.net/a2a" },
+      "toolGatewayAudience": { "type": "String", "defaultValue": "api://aiip-tool-gateway" },
+      "apInvoiceAgentAudience": { "type": "String", "defaultValue": "api://aiip-ap-invoice-agent" },
+      "tenantId": { "type": "String", "defaultValue": "00000000-0000-0000-0000-000000000000" }
+    },
+    "triggers": {
+      "When_invoice_event_arrives": {
+        "type": "ServiceProvider",
+        "inputs": {
+          "parameters": { "queueName": "invoice-events", "isSessionsEnabled": false },
+          "serviceProviderConfiguration": { "connectionName": "serviceBus", "operationId": "receiveQueueMessages", "serviceProviderId": "/serviceProviders/serviceBus" }
+        },
+        "splitOn": "@triggerOutputs()?['body']"
+      }
+    },
+    "actions": {
+      "Parse_event": {
+        "type": "ParseJson",
+        "inputs": {
+          "content": "@json(triggerBody()?['contentData'])",
+          "schema": { "type": "object", "properties": { "id": { "type": "string" }, "subject": { "type": "string" }, "data": { "type": "object" } } }
+        },
+        "runAfter": {}
+      },
+      "Agent_extract": {
+        "type": "Http",
+        "inputs": {
+          "method": "POST",
+          "uri": "@{parameters('a2aGatewayUrl')}/v1/agents/ap-invoice-agent/a2a",
+          "headers": { "A2A-Version": "1.0", "x-tenant-id": "@parameters('tenantId')", "traceparent": "@{concat('00-', replace(guid(), '-', ''), '-', substring(replace(guid(), '-', ''), 0, 16), '-01')}" },
+          "body": { "jsonrpc": "2.0", "id": "@{guid()}", "method": "SendMessage", "params": { "message": { "messageId": "@{guid()}", "role": "ROLE_USER", "parts": [ { "data": { "skill": "extract", "input": { "text": "@{body('Parse_event')?['data']?['text']}" } } } ] } } },
+          "authentication": { "type": "ManagedServiceIdentity", "audience": "@parameters('apInvoiceAgentAudience')" }
+        },
+        "runAfter": { "Parse_event": [ "Succeeded" ] }
+      },
+      "Invoice_fields": {
+        "type": "Compose",
+        "inputs": "@body('Agent_extract')?['artifact']?['output']?['invoice']",
+        "runAfter": { "Agent_extract": [ "Succeeded" ] }
+      },
+      "Park_invoice": {
+        "type": "Http",
+        "inputs": {
+          "method": "POST",
+          "uri": "@{parameters('toolGatewayUrl')}/v1/tools/erp.park_invoice/invoke",
+          "headers": { "Idempotency-Key": "@{workflow()?['run']?['name']}:park" },
+          "body": { "args": "@outputs('Invoice_fields')" },
+          "authentication": { "type": "ManagedServiceIdentity", "audience": "@parameters('toolGatewayAudience')" }
+        },
+        "runAfter": { "Invoice_fields": [ "Succeeded" ] }
+      },
+      "Request_approval": {
+        "type": "Http",
+        "inputs": {
+          "method": "POST",
+          "uri": "@{parameters('toolGatewayUrl')}/v1/approvals",
+          "body": { "tool": "erp.post_parked_invoice", "args": { "invoice_document": "@{body('Park_invoice')?['data']?['invoice_document']}", "amount": "@{outputs('Invoice_fields')?['amount']}" } },
+          "authentication": { "type": "ManagedServiceIdentity", "audience": "@parameters('toolGatewayAudience')" }
+        },
+        "runAfter": { "Park_invoice": [ "Succeeded" ] }
+      },
+      "Wait_for_approval": {
+        "type": "HttpWebhook",
+        "inputs": {
+          "subscribe": {
+            "method": "POST",
+            "uri": "@{parameters('toolGatewayUrl')}/v1/approvals/@{body('Request_approval')?['approval_id']}/subscribe",
+            "body": { "callbackUrl": "@{listCallbackUrl()}" },
+            "authentication": { "type": "ManagedServiceIdentity", "audience": "@parameters('toolGatewayAudience')" }
+          },
+          "unsubscribe": {}
+        },
+        "limit": { "timeout": "PT48H" },
+        "runAfter": { "Request_approval": [ "Succeeded" ] }
+      },
+      "Approved": {
+        "type": "If",
+        "expression": { "and": [ { "equals": [ "@body('Wait_for_approval')?['status']", "approved" ] } ] },
+        "actions": {
+          "Post_and_pay": {
+            "type": "Scope",
+            "actions": {
+              "Post_invoice": {
+                "type": "Http",
+                "inputs": {
+                  "method": "POST",
+                  "uri": "@{parameters('toolGatewayUrl')}/v1/tools/erp.post_parked_invoice/invoke",
+                  "headers": { "Idempotency-Key": "@{workflow()?['run']?['name']}:post", "x-approval-id": "@{body('Request_approval')?['approval_id']}" },
+                  "body": { "args": { "invoice_document": "@{body('Park_invoice')?['data']?['invoice_document']}", "amount": "@{outputs('Invoice_fields')?['amount']}" } },
+                  "authentication": { "type": "ManagedServiceIdentity", "audience": "@parameters('toolGatewayAudience')" }
+                },
+                "runAfter": {}
+              },
+              "Schedule_payment": {
+                "type": "Http",
+                "inputs": {
+                  "method": "POST",
+                  "uri": "@{parameters('toolGatewayUrl')}/v1/tools/erp.schedule_payment/invoke",
+                  "headers": { "Idempotency-Key": "@{workflow()?['run']?['name']}:pay" },
+                  "body": { "args": { "invoice_document": "@{body('Park_invoice')?['data']?['invoice_document']}" } },
+                  "authentication": { "type": "ManagedServiceIdentity", "audience": "@parameters('toolGatewayAudience')" }
+                },
+                "runAfter": { "Post_invoice": [ "Succeeded" ] }
+              }
+            },
+            "runAfter": {}
+          },
+          "Compensate_reverse": {
+            "type": "Http",
+            "inputs": {
+              "method": "POST",
+              "uri": "@{parameters('toolGatewayUrl')}/v1/tools/erp.reverse_invoice/invoke",
+              "headers": { "Idempotency-Key": "@{workflow()?['run']?['name']}:compensate" },
+              "body": { "args": { "invoice_document": "@{body('Park_invoice')?['data']?['invoice_document']}" } },
+              "authentication": { "type": "ManagedServiceIdentity", "audience": "@parameters('toolGatewayAudience')" }
+            },
+            "runAfter": { "Post_and_pay": [ "Failed", "TimedOut" ] }
+          }
+        },
+        "else": {
+          "actions": {
+            "Compensate_delete_parked": {
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "@{parameters('toolGatewayUrl')}/v1/tools/erp.delete_parked_invoice/invoke",
+                "headers": { "Idempotency-Key": "@{workflow()?['run']?['name']}:delete" },
+                "body": { "args": { "invoice_document": "@{body('Park_invoice')?['data']?['invoice_document']}" } },
+                "authentication": { "type": "ManagedServiceIdentity", "audience": "@parameters('toolGatewayAudience')" }
+              },
+              "runAfter": {}
+            }
+          }
+        },
+        "runAfter": { "Wait_for_approval": [ "Succeeded", "TimedOut" ] }
+      }
+    },
+    "outputs": {}
+  },
+  "kind": "Stateful"
+}

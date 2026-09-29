@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.env
+*.egg-info/
+build/
+dist/
+.azure/
+infra/*.json
+!infra/main.parameters.json
+evals-out/
+.demo-logs/
+refs/
+local.settings.json
+functions/aiip/

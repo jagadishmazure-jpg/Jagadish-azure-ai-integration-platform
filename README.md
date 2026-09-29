@@ -2,6 +2,18 @@
 
 [![ci](https://github.com/jagadishmazure-jpg/Jagadish-azure-ai-integration-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/jagadishmazure-jpg/Jagadish-azure-ai-integration-platform/actions/workflows/ci.yml)
 
+## At a glance (for recruiters)
+
+- **AI agents that work safely with core business systems:** agents read from and write to SAP, Salesforce, ServiceNow, Workday, Dynamics and Jira only through five gateways (tool, MCP, A2A, event and identity), never through direct connections.
+- **Agents act with the user's own permissions:** for interactive requests, Microsoft Entra on-behalf-of (OBO) tokens mean an agent can only see and change what the signed-in user could (background workers use their own managed identity), and every action is recorded in a tamper-evident audit trail.
+- **Reliable writes into systems of record:** repeated requests don't create duplicates (idempotency keys), circuit breakers stop calls to a failing system, and an HTTP 200 that hides a business error is still counted as a failure.
+- **Event-driven agents and human-approved business processes:** SAP events flow through Event Grid and Service Bus to agent workers, and a Durable Functions vendor-invoice process waits for a human approval (48-hour timer) before money moves.
+- **167 automated tests** plus eval and contract gates and an end-to-end demo over real HTTP run in CI.
+
+**Skills demonstrated:** Azure integration, API gateways (APIM), Microsoft Entra ID / OAuth 2.0 OBO, Event Grid, Service Bus, Durable Functions, Logic Apps, MCP, A2A, Microsoft Agent Framework, FastAPI, Bicep/azd, Python.
+
+*Honesty note: it runs offline against deterministic SaaS stand-ins and has not been deployed to live Azure yet (see the note below).*
+
 **Agents that use SAP, Salesforce, ServiceNow, Workday, Dynamics and Jira without ever holding a
 connection to them.**
 

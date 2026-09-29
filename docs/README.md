@@ -14,3 +14,4 @@ Design notes for each part of the platform. Start with `architecture.md`.
 | [sdk-notes.md](sdk-notes.md) | Pinned SDK versions, surprises, verified vs unverified |
 | [cost-estimate.md](cost-estimate.md) | Billing dimensions per resource with official pricing links |
 | [deploy.md](deploy.md) | azd path, Entra registrations, parameters, OIDC workflow |
+| [deployment.md](deployment.md) | GitHub Actions pipeline: diagram, PR checks, dev -> prod approval gates, Bicep or Terraform, OIDC federated-credential setup, smoke tests, teardown, FDE notes |

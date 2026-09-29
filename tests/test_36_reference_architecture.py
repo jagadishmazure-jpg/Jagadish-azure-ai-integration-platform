@@ -100,12 +100,17 @@ def test_parameters_file_maps_azd_env():
     assert p["deployFrontDoor"]["value"].endswith("=false}")
 
 
-def test_deploy_workflow_is_manual_oidc_and_gated():
+def test_deploy_workflow_is_gated_oidc_and_promotes_with_approval():
     wf = (ROOT / ".github" / "workflows" / "deploy.yml").read_text()
-    assert "workflow_dispatch" in wf and "push:" not in wf
-    assert "vars.ENABLE_DEPLOY == 'true'" in wf
-    assert "id-token: write" in wf and "environment: dev" in wf
+    assert "workflow_dispatch" in wf and "deploy_tool" in wf and "bicep" in wf
+    # every job but the gate report is skipped unless the repo variable is set
+    assert wf.count("if: vars.DEPLOY_ENABLED == 'true'") >= 2
+    assert "id-token: write" in wf and "environment: dev" in wf and "environment: prod" in wf
+    assert "azure/login@v2" in wf
     assert "client-secret" not in wf.lower() and "AZURE_CLIENT_SECRET" not in wf
+    teardown = (ROOT / ".github" / "workflows" / "teardown.yml").read_text()
+    assert "workflow_dispatch" in teardown and "push:" not in teardown
+    assert "vars.DEPLOY_ENABLED == 'true'" in teardown
 
 
 def test_ci_runs_tests_lint_gate_and_bicep():

@@ -15,3 +15,12 @@ evals-out/
 refs/
 local.settings.json
 functions/aiip/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+crash.log
+backend_override.tf

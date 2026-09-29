@@ -62,17 +62,13 @@ each pack at a vendor **sandbox** with `AIIP_SAAS_<VENDOR>_URL` before any produ
 | `AIIP_PRIVATE_NETWORKING` | `false` | VNet, internal Container Apps environment, private endpoints for Key Vault and Service Bus |
 | `AIIP_COMPUTE_PROFILE` | `containerapps` | `aks` provisions an AKS cluster (workload identity, KEDA) instead; workloads are then applied with the same image |
 
-## CI/CD with GitHub OIDC (disabled by default)
+## CI/CD with GitHub Actions and OIDC (disabled by default)
 
-`.github/workflows/deploy.yml` runs only on `workflow_dispatch` **and** only when the repository
-variable `ENABLE_DEPLOY` is `true`.
-
-1. Create an app registration (or user-assigned identity) with a federated credential for
-   `repo:jagadishmazure-jpg/Jagadish-azure-ai-integration-platform:environment:dev`.
-2. Grant it Contributor and a constrained RBAC Administrator on the target subscription.
-3. Set repository variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`,
-   then `ENABLE_DEPLOY=true` (location is a workflow input). No secrets are stored in GitHub.
-4. Run the workflow; the `teardown` input runs `azd down --purge`.
+The pipeline is described in [`deployment.md`](deployment.md): pull-request checks for the
+Terraform stack, a `deploy.yml` workflow that goes dev -> prod through GitHub Environments with
+required reviewers, a `deploy_tool` input (`bicep` or `terraform`), OIDC login with federated
+credentials (no secrets), smoke tests and a manual `teardown.yml`. Every deploy job is gated
+behind the repository variable `DEPLOY_ENABLED`, which is not set.
 
 ## Tear down
 

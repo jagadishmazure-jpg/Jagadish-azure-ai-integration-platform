@@ -10,8 +10,9 @@
 - **Event-driven agents and human-approved business processes:** SAP events flow through Event Grid and Service Bus to agent workers, and a Durable Functions vendor-invoice process waits for a human approval (48-hour timer) before money moves.
 - **Runtime safety layer with an out-of-band watchdog:** tool code runs in a sandbox with networking off, every agent action is checked against a default-deny policy that records why it was allowed, and a separate monitor reading signed telemetry quarantines an agent within milliseconds (1-2 ms measured locally) of an injection, data leak, runaway loop or unexpected tool (9 of 9 attack scenarios contained, 0 false alarms).
 - **214 automated tests** plus eval, contract and safety gates and an end-to-end demo over real HTTP run in CI.
+- **Terraform + Bicep, GitHub Actions deploy:** the same infrastructure in both tools ([`infra/terraform`](infra/terraform/README.md)), and a pipeline with OIDC login (no secrets), a Bicep/Terraform choice and dev -> prod approval gates. It stays switched off until a subscription exists ([docs/deployment.md](docs/deployment.md)).
 
-**Skills demonstrated:** Azure integration, API gateways (APIM), Microsoft Entra ID / OAuth 2.0 OBO, Event Grid, Service Bus, Durable Functions, Logic Apps, MCP, A2A, Microsoft Agent Framework, FastAPI, Bicep/azd, Python.
+**Skills demonstrated:** Azure integration, API gateways (APIM), Microsoft Entra ID / OAuth 2.0 OBO, Event Grid, Service Bus, Durable Functions, Logic Apps, MCP, A2A, Microsoft Agent Framework, FastAPI, Bicep/azd, Terraform, GitHub Actions (OIDC), Python.
 
 *Honesty note: it runs offline against deterministic SaaS stand-ins and has not been deployed to live Azure yet (see the note below).*
 
@@ -40,7 +41,7 @@ it is **safe to repeat**, and whether the **business step actually completed**.
 | **SaaS connector packs** - Salesforce, ServiceNow, Workday, Dynamics/Dataverse, SAP OData, Jira: auth, canonical mapping, idempotent writes, error taxonomy, rate-limit hints, minimal fields | `tests/test_34_saas_connectors.py` |
 | **Integration observability** - spans with system / operation / business_key / result_class; HTTP 200 with a business error counts as failure; completion metrics; Workbook + Grafana from one KQL file | demo step 10, `tests/test_35_observability.py` |
 | **Runtime safety** - agent sandbox (subprocess, deny-by-default network, scoped files, CPU/memory/time limits, env allow-list; ACA dynamic sessions adapter), policy prover (YAML, default deny, proof per decision in the audit chain), Ed25519-signed audit chains, out-of-band monitor with kill switch enforced by every gateway; attack/benign eval gate | [`src/aiip/safety/`](src/aiip/safety), `tests/test_37_runtime_safety.py`, `tests/test_38_out_of_band_monitor.py` |
-| **Reference architecture as code** - Bicep + `azd`, cost-minimized defaults, opt-in Front Door / Private Link / AKS | `infra/`, `tests/test_36_reference_architecture.py` |
+| **Reference architecture as code** - Bicep + `azd` and a Terraform twin, cost-minimized defaults, opt-in Front Door / Private Link / AKS, gated GitHub Actions deploy with OIDC and approval gates | `infra/`, [docs/deployment.md](docs/deployment.md), `tests/test_36_reference_architecture.py` |
 
 ## Architecture
 
@@ -128,13 +129,13 @@ What the demo prints (abridged, from a real run):
 | [`control-plane/`](control-plane) | Generated contracts: agent cards, tool registry, MCP catalog, app registrations |
 | [`evals/`](evals) | Golden cases and scores for the eval + contract gate; runtime-safety attack/benign scenarios |
 | [`observability/`](observability) | KQL source, Azure Monitor workbook, Grafana dashboard |
-| [`infra/`](infra) | Bicep for `azd` (subscription scope, cost-minimized defaults) |
+| [`infra/`](infra) | Bicep for `azd` (subscription scope, cost-minimized defaults) and the Terraform twin in [`infra/terraform`](infra/terraform/README.md) |
 | [`scripts/`](scripts) | Demo, eval gate, safety gate, contract export, dashboard build, packaging hooks, originality check |
 | [`tests/`](tests) | Offline test suite, one file per integration topic, with failure drills |
 | [`docs/`](docs) | Architecture, identity, events, BPM, connectors, observability, interview guide, SDK notes, cost, deploy |
 | [`azure.yaml`](azure.yaml) | `azd` services (one image, many commands) and hooks |
 | [`Dockerfile`](Dockerfile) | Single platform image (Python 3.13 slim, non-root) |
-| [`.github/workflows/`](.github/workflows) | CI (lint, tests, eval gate, safety gate, contract/dashboard drift, demo, bicep build) and a disabled OIDC deploy |
+| [`.github/workflows/`](.github/workflows) | CI (lint, tests, eval gate, safety gate, contract/dashboard drift, demo, bicep build), Terraform checks, and the gated OIDC deploy / teardown pipeline |
 | [`.env.example`](.env.example) | Every setting, none of them secret |
 
 ## Industry mapping
@@ -166,7 +167,7 @@ The [interview guide](docs/interview-guide.md) maps common interview questions t
 | | |
 |---|---|
 | Tests | offline pytest suite, ruff clean, eval + contract gate, runtime-safety gate, all in CI |
-| Infra | `bicep build` clean with no warnings (CI); not deployed |
+| Infra | `bicep build` clean with no warnings; Terraform `validate`, offline `terraform test`, tflint and checkov (CI); not deployed |
 | External systems | sandbox stand-ins only ([`src/aiip/fakesaas`](src/aiip/fakesaas)) |
 | Cost | [billing dimensions + official pricing links](docs/cost-estimate.md), no invented prices |
 

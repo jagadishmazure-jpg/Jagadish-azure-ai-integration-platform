@@ -1,0 +1,47 @@
+# Best practices: what is implemented and what is planned
+
+A checklist of enterprise cloud and agentic AI practices for this repo. Each row links to the code that implements it and says honestly whether it is implemented, written but not deployed, or planned. Nothing here has been deployed to Azure.
+
+**How to read the status column**
+
+- **Implemented**: the code is in this repo and runs in the offline tests or in CI.
+- **Written, not deployed**: the infrastructure or workflow code exists and passes validation (`bicep build`, `terraform validate` and `terraform test`, tflint, checkov, actionlint), but it has never run against a real Azure subscription.
+- **Planned**: not in the repo yet. The note says what is missing.
+
+## Enterprise cloud
+
+| Practice | What this repo does | Status | Where |
+|---|---|---|---|
+| **Identity: OIDC and managed identity** | Interactive journeys use Entra on-behalf-of tokens so an agent acts with the user's permissions; workers use client credentials or their own managed identity; one app registration per workload. Offline, a local token issuer stands in for Entra. The IaC creates one user-assigned identity per workload (15 plus the Functions host). CI signs in with OIDC. | Implemented (offline issuer); Azure written, not deployed | [`identity`](../src/aiip/identity/README.md), [identity.md](identity.md), [`identity module`](../infra/terraform/modules/identity/README.md), [ADR 0003](adr/0003-oidc-and-managed-identity.md) |
+| **Least privilege** | Each workload identity gets only what it uses: AcrPull, Service Bus sender or receiver on its own queues, Event Grid Data Sender for the topic, and Key Vault Secrets User only for the gateways that call vendors. Tool Gateway allow-lists are per agent card. | Implemented (gateways); roles written, not deployed | [`infra/terraform`](../infra/terraform/README.md), [`tools`](../src/aiip/tools/README.md) |
+| **Networking** | Dev is public with Entra auth. Prod turns on a VNet with NSGs and private endpoints (Service Bus moves to Premium) and Front Door in front of APIM. Tool code runs in a sandbox with networking off by default. | Written, not deployed; sandbox implemented | [`network`](../infra/terraform/modules/network/README.md), [`frontdoor`](../infra/terraform/modules/frontdoor/README.md), [`safety sandbox`](../src/aiip/safety/README.md) |
+| **Secrets** | Vendor credentials are Key Vault references resolved at runtime, never in config. A repo hygiene test fails the build on secret-like values or personal email addresses. Functions storage has shared keys and local users off. | Implemented | [`src/aiip/shared/secrets.py`](../src/aiip/shared/secrets.py), [`tests/test_repo_hygiene.py`](../tests/test_repo_hygiene.py), [`functions module`](../infra/terraform/modules/functions/README.md) |
+| **Tagging and naming** | CAF names (`rg-aiip-dev-eus2-001`) and six required tags, checked by `terraform test`. | Implemented (tests); written, not deployed | [`naming module`](../infra/terraform/modules/naming/README.md), [`plan tests`](../infra/terraform/tests/README.md) |
+| **Cost controls** | Cost-minimized defaults: scale-to-zero apps, Consumption APIM, Basic Service Bus, Flex Consumption Functions, a 1 GB/day log cap; Front Door, private networking and AKS are opt-in. Event budgets per class park storms instead of spending model calls. Budgets and cost alerts are not defined yet. | Written, not deployed; event budgets implemented; cost alerts planned | [cost-estimate.md](cost-estimate.md), [`infra/terraform/envs/dev.tfvars`](../infra/terraform/envs/dev.tfvars), [`events`](../src/aiip/events/README.md) |
+| **Infrastructure as code** | Bicep for `azd` and a Terraform twin. CI builds the Bicep with no warnings and runs fmt, validate, offline `terraform test`, tflint and checkov. | Implemented | [`infra/`](../infra/README.md), [`.github/workflows/infra.yml`](../.github/workflows/infra.yml), [ADR 0001](adr/0001-bicep-and-terraform.md) |
+| **CI/CD gates** | Lint, 214 tests, the eval + contract gate, the runtime-safety gate, contract and dashboard drift checks and an end-to-end demo over real HTTP on every push. Deploy goes dev -> prod through a GitHub Environment meant to require reviewers; it is gated off and the Environments do not exist yet. | Implemented (CI); deploy written, not deployed | [`workflows`](../.github/workflows/README.md), [deployment.md](deployment.md), [ADR 0005](adr/0005-deploy-gated-off.md) |
+| **Observability** | Spans carry system, operation, business key and result class; an HTTP 200 with a business error counts as a failure. One KQL file generates both the Azure Monitor workbook and the Grafana dashboard, and CI checks they are current. Alert rules are not defined yet. | Implemented; alerts planned | [`observability/`](../observability/README.md), [observability.md](observability.md), [`src/aiip/shared/telemetry.py`](../src/aiip/shared/telemetry.py) |
+| **Disaster recovery** | Two layers of idempotency and dead-letter queues make retries and replays safe; Durable Functions keeps process state; Key Vault purge protection and blob soft delete in prod. No second region, backup policy or restore drill. | Replay safety implemented; DR planned | [`tools`](../src/aiip/tools/README.md), [events.md](events.md), [bpm.md](bpm.md) |
+
+## Agentic AI
+
+| Practice | What this repo does | Status | Where |
+|---|---|---|---|
+| **Human in the loop** | Commit-class tool calls need an approval bound to the approver, business key and amount, checked in the Tool Gateway so a forged or replayed approval cannot move money. The vendor-invoice process waits up to 48 hours for a human, then compensates. | Implemented | [`src/aiip/shared/approvals.py`](../src/aiip/shared/approvals.py), [bpm.md](bpm.md), [`tests/test_32_bpm.py`](../tests/test_32_bpm.py) |
+| **Evals and release gates** | Golden-set evals plus contract checks, and a separate runtime-safety gate (every attack scenario contained, zero false quarantines), both fail CI on regression. | Implemented | [`evals/`](../evals/README.md), [`scripts/run_eval_gate.py`](../scripts/run_eval_gate.py), [`scripts/run_safety_evals.py`](../scripts/run_safety_evals.py), [ADR 0004](adr/0004-eval-gates-block-release.md) |
+| **Guardrails and runtime safety** | Sandbox for tool code (network off, scoped files, CPU/memory/time limits), a default-deny policy prover that records why each action was allowed, Ed25519-signed audit chains, and an out-of-band monitor with a kill switch enforced by every gateway. Vendor and MCP output is screened as untrusted. | Implemented | [`safety`](../src/aiip/safety/README.md), [`src/aiip/shared/untrusted.py`](../src/aiip/shared/untrusted.py) |
+| **Tool governance and MCP** | Agents reach systems of record only through five gateways (tool, MCP, A2A, event, identity). The Tool Gateway enforces per-card allow-lists, read / simulate / commit classes, rate limits, breakers, schemas and idempotency; the MCP Gateway keeps servers read-only by default; contracts are generated and drift-checked. | Implemented | [`tools`](../src/aiip/tools/README.md), [`mcp`](../src/aiip/mcp/README.md), [`control-plane`](../control-plane/README.md) |
+| **Memory** | Agents are stateless per request; durable process state lives in Durable Functions and the systems of record. There is no long-term agent memory in this repo, by design. | Not in scope | [bpm.md](bpm.md) |
+| **Grounding** | Agents answer from system-of-record reads mapped to canonical models, not from model recall; connectors drop fields the agent does not need. | Implemented | [`connectors`](../src/aiip/connectors/README.md), [connectors.md](connectors.md) |
+| **Tracing** | W3C `traceparent` and tenant propagate across A2A hops, gateways and events; actor and subject are on every record. | Implemented | [`src/aiip/shared/tracecontext.py`](../src/aiip/shared/tracecontext.py), [`a2a`](../src/aiip/a2a/README.md) |
+| **Model and agent versioning** | Agent cards are versioned and carry an eval score and side-effect class; contracts are regenerated and checked in CI. In Azure mode the agents call an existing Foundry project and model named by `FOUNDRY_MODEL`; this repo's IaC does not deploy the model, so version pinning and a model promotion gate are planned. | Cards implemented; model pins planned | [`control-plane`](../control-plane/README.md), [`scripts/export_contracts.py`](../scripts/export_contracts.py) |
+| **Responsible AI** | Agents act only with the signed-in user's permissions (OBO); hash-chained audit of every action; minimal fields from each vendor; sandbox stand-ins are labelled as such. | Implemented | [identity.md](identity.md), [`src/aiip/shared/audit.py`](../src/aiip/shared/audit.py), [`fakesaas`](../src/aiip/fakesaas/README.md) |
+
+## Known gaps, in priority order
+
+- Run against a real Entra tenant: app registrations, OBO consent and the Key Vault references have only run against the local issuer and stand-ins.
+- Provision dev from the pipeline (Bicep or Terraform) and replace the stand-ins with vendor sandboxes one connector at a time.
+- Budgets, cost alerts and alert rules on the integration KQL.
+- A DR plan: paired region for Service Bus and Functions, backup policy, a restore drill.
+
+Related: [architecture decisions](adr/README.md) · [deployment pipeline](deployment.md) · [security policy](../SECURITY.md) · [contributing](../CONTRIBUTING.md)

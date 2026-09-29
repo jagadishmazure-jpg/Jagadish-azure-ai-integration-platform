@@ -69,7 +69,7 @@ exists. Everything here is offline and nothing is deployed.
 
 ## Measured on this machine
 
-`python scripts/run_safety_evals.py` (see [`../../evals/safety-scores.json`](../../evals/safety-scores.json) for the last run):
+`python scripts/run_safety_evals.py` (see [`../../evals/safety-scores.json`](../../../evals/safety-scores.json) for the last run):
 all 9 attack scenarios contained, 0 of 4 benign scenarios quarantined, containment latency (kill switch set
 minus triggering record's timestamp) about 0.5-2 ms in-process. The cross-process test (monitor
 tailing JSONL, file-backed kill switch) measured about 1 ms. Tests assert < 50 ms in-process and

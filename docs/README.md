@@ -4,6 +4,8 @@ Design notes for each part of the platform. Start with `architecture.md`.
 
 | File | What it does |
 |---|---|
+| [adr/](adr/README.md) | Architecture decision records: one file per decision, with context, decision and consequences. |
+| [best-practices.md](best-practices.md) | Enterprise cloud and agentic AI checklist for this repo, each item marked implemented, written-not-deployed or planned, with links to the code. |
 | [architecture.md](architecture.md) | Reference topology, the five gateways, hosting, local vs Azure mode |
 | [identity.md](identity.md) | "As whom?": OBO, agent-scoped and hybrid identity, rules enforced in code |
 | [events.md](events.md) | Canonical events, admission (dedupe, budget), worker settlement, dead-lettering |

@@ -16,6 +16,10 @@
 
 *Honesty note: it runs offline against deterministic SaaS stand-ins and has not been deployed to live Azure yet (see the note below).*
 
+**Contents:** [What](#at-a-glance-for-recruiters) · [Why](#why-it-exists) · [Architecture](#architecture) · [Run](#run-it-about-a-minute) · [Test](#test) · [Deploy](#deploy) · [Limits](#limits) · [Docs](#documentation)
+
+## Why it exists
+
 **Agents that use SAP, Salesforce, ServiceNow, Workday, Dynamics and Jira without ever holding a
 connection to them.**
 
@@ -119,6 +123,23 @@ What the demo prints (abridged, from a real run):
 
 `python scripts/demo.py --inproc` runs the same scenarios in one process (used by the tests).
 
+## Test
+
+```bash
+ruff check . && ruff format --check .
+pytest -q                                     # 214 offline tests, including repo hygiene
+python scripts/run_eval_gate.py --no-write    # eval + contract gate
+python scripts/run_safety_evals.py --no-write # attacks contained, no false quarantines
+python scripts/export_contracts.py --check && python scripts/build_dashboards.py --check
+cd infra/terraform && terraform init -backend=false && terraform validate && terraform test
+```
+
+CI runs all of these plus the HTTP demo and `bicep build` ([`.github/workflows/`](.github/workflows/README.md)).
+
+## Deploy
+
+Two paths, neither of which has been run yet: `azd up` from a laptop ([docs/deploy.md](docs/deploy.md)), or the GitHub Actions pipeline ([docs/deployment.md](docs/deployment.md)) with a Bicep or Terraform choice, OIDC login and dev -> prod approval. The pipeline stays switched off until the repository variable `DEPLOY_ENABLED` is set. Billing dimensions: [docs/cost-estimate.md](docs/cost-estimate.md).
+
 ## Repo map
 
 | File | What it does |
@@ -132,7 +153,8 @@ What the demo prints (abridged, from a real run):
 | [`infra/`](infra) | Bicep for `azd` (subscription scope, cost-minimized defaults) and the Terraform twin in [`infra/terraform`](infra/terraform/README.md) |
 | [`scripts/`](scripts) | Demo, eval gate, safety gate, contract export, dashboard build, packaging hooks, originality check |
 | [`tests/`](tests) | Offline test suite, one file per integration topic, with failure drills |
-| [`docs/`](docs) | Architecture, identity, events, BPM, connectors, observability, interview guide, SDK notes, cost, deploy |
+| [`docs/`](docs) | Architecture, identity, events, BPM, connectors, observability, interview guide, SDK notes, cost, deploy, best practices, ADRs |
+| [`SECURITY.md`](SECURITY.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`CHANGELOG.md`](CHANGELOG.md) | Vulnerability reporting, contribution rules, change history |
 | [`azure.yaml`](azure.yaml) | `azd` services (one image, many commands) and hooks |
 | [`Dockerfile`](Dockerfile) | Single platform image (Python 3.13 slim, non-root) |
 | [`.github/workflows/`](.github/workflows) | CI (lint, tests, eval gate, safety gate, contract/dashboard drift, demo, bicep build), Terraform checks, and the gated OIDC deploy / teardown pipeline |
@@ -170,5 +192,22 @@ The [interview guide](docs/interview-guide.md) maps common interview questions t
 | Infra | `bicep build` clean with no warnings; Terraform `validate`, offline `terraform test`, tflint and checkov (CI); not deployed |
 | External systems | sandbox stand-ins only ([`src/aiip/fakesaas`](src/aiip/fakesaas)) |
 | Cost | [billing dimensions + official pricing links](docs/cost-estimate.md), no invented prices |
+
+## Limits
+
+* Nothing is deployed. The Azure code paths (MSAL, Key Vault, Service Bus, Event Grid, Durable Functions, Foundry) are written against the real SDKs but have only run offline ([docs/sdk-notes.md](docs/sdk-notes.md)).
+* Every SaaS system is a sandbox stand-in; no vendor sandbox has been connected.
+* The Terraform twin passes validate, offline `terraform test`, tflint and checkov, but no plan has run against a subscription. The deploy pipeline's GitHub Environments and reviewers do not exist yet.
+* Eval and safety scores come from small synthetic scenario sets. The watchdog latency (1-2 ms) was measured on a laptop, not in Azure.
+
+## Documentation
+
+| Document | What it covers |
+|---|---|
+| [`docs/best-practices.md`](docs/best-practices.md) | Enterprise cloud and agentic AI practices, each marked implemented, written-not-deployed or planned, with links to the code |
+| [`docs/adr/`](docs/adr/README.md) | Architecture decision records (Bicep + Terraform, offline mocks, OIDC, eval gates, gated deploy, ...) |
+| [`docs/deployment.md`](docs/deployment.md) | The GitHub Actions pipeline and the one-time Azure setup it needs |
+| [`docs/architecture.md`](docs/architecture.md) · [`docs/identity.md`](docs/identity.md) · [`docs/interview-guide.md`](docs/interview-guide.md) | Architecture, the identity model, interview questions mapped to code |
+| [`SECURITY.md`](SECURITY.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`CHANGELOG.md`](CHANGELOG.md) | How to report a vulnerability, how to contribute, what changed |
 
 MIT licensed. Author: Jagadish Meduri.

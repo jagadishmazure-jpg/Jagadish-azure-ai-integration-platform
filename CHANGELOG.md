@@ -1,20 +1,24 @@
 # Changelog
 
-Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). There are no versioned releases, so entries are grouped by date.
+Notable changes, newest first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). There are no versioned releases, so entries are grouped by milestone, newest first.
 
 ## Unreleased
 
 ### Added
 
+- Component docs in `docs/components/` (17 standard sections each), `docs/implementation-guide.md`, `docs/adopt-this.md`, and the `scripts/doc_drift.py` CI check that keeps pasted output and code excerpts in sync with the code (`scripts/doc_demo.py` masks timings and ids).
+- `CODEOWNERS`.
 - `docs/best-practices.md`: cloud and agentic AI practices with honest status and links.
 - Architecture decision records in `docs/adr/`.
 - `SECURITY.md`, `CONTRIBUTING.md` and this changelog.
 
 ### Changed
 
+- The README test count now matches the collected suite, and the README demo excerpt is generated from a real run.
+- The demo prints the event-storm outcome counts in sorted order, so its output is stable.
 - README sections follow one order: what, why, architecture, run, test, deploy, limits.
 
-## 2026-09-29
+## Milestone 1: platform, runtime safety and delivery pipeline
 
 ### Added
 

@@ -1,7 +1,7 @@
 # safety: runtime safety layer
 
 A software-only runtime boundary and watchdog for the agents on this platform. It is modelled
-on the ideas behind NVIDIA's Open Agent Safety Platform (announced 28 Sep 2026): a secure runtime
+on the ideas behind NVIDIA's Open Agent Safety Platform: a secure runtime
 around the agent harness, plus an independent monitor that can contain an agent quickly. It is
 **not** NVIDIA code, uses none of their APIs and does not reproduce their hardware enforcement.
 It reuses what the platform already has: the gateways, Entra token validation with OBO, the

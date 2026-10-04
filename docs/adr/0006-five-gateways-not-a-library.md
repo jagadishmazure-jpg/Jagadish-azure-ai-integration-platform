@@ -1,7 +1,6 @@
 # ADR 0006: Five gateway services, not a shared library
 
 - **Status:** Accepted
-- **Date:** 2026-09-29
 
 ## Context
 

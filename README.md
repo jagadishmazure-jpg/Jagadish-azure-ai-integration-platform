@@ -8,8 +8,8 @@
 - **Agents act with the user's own permissions:** for interactive requests, Microsoft Entra on-behalf-of (OBO) tokens mean an agent can only see and change what the signed-in user could (background workers use their own managed identity), and every action is recorded in a tamper-evident audit trail.
 - **Reliable writes into systems of record:** repeated requests don't create duplicates (idempotency keys), circuit breakers stop calls to a failing system, and an HTTP 200 that hides a business error is still counted as a failure.
 - **Event-driven agents and human-approved business processes:** SAP events flow through Event Grid and Service Bus to agent workers, and a Durable Functions vendor-invoice process waits for a human approval (48-hour timer) before money moves.
-- **Runtime safety layer with an out-of-band watchdog:** tool code runs in a sandbox with networking off, every agent action is checked against a default-deny policy that records why it was allowed, and a separate monitor reading signed telemetry quarantines an agent within milliseconds (1-2 ms measured locally) of an injection, data leak, runaway loop or unexpected tool (9 of 9 attack scenarios contained, 0 false alarms).
-- **214 automated tests** plus eval, contract and safety gates and an end-to-end demo over real HTTP run in CI.
+- **Runtime safety layer with an out-of-band watchdog:** tool code runs in a sandbox with networking off, every agent action is checked against a default-deny policy that records why it was allowed, and a separate monitor reading signed telemetry quarantines an agent within milliseconds (under 2 ms measured locally) of an injection, data leak, runaway loop or unexpected tool (9 of 9 attack scenarios contained, 0 false alarms).
+- **221 automated tests** plus eval, contract and safety gates and an end-to-end demo over real HTTP run in CI.
 - **Terraform + Bicep, GitHub Actions deploy:** the same infrastructure in both tools ([`infra/terraform`](infra/terraform/README.md)), and a pipeline with OIDC login (no secrets), a Bicep/Terraform choice and dev -> prod approval gates. It stays switched off until a subscription exists ([docs/deployment.md](docs/deployment.md)).
 
 **Skills demonstrated:** Azure integration, API gateways (APIM), Microsoft Entra ID / OAuth 2.0 OBO, Event Grid, Service Bus, Durable Functions, Logic Apps, MCP, A2A, Microsoft Agent Framework, FastAPI, Bicep/azd, Terraform, GitHub Actions (OIDC), Python.
@@ -96,11 +96,12 @@ pytest -q                         # offline, ~15 s
 python scripts/run_safety_evals.py  # attack/benign runtime-safety gate
 ```
 
-What the demo prints (abridged, from a real run):
+What the demo prints (abridged, generated from `python scripts/demo.py --inproc` with timings and ids masked; CI checks it is current):
 
+<!-- output: python scripts/doc_demo.py demo | grep -E '^===|fan-out|replayed, not|bob \(|after gateway restart|gateway result|failing fast|injected instruction|event storm|carol approves|INV-7790|tool-gateway identity' -->
 ```text
-=== 1. Interactive journey, user-scoped (OBO): planner fans out over A2A
-  [ok] fan-out: ['crm', 'data', 'erp'] acting as user alice@co...
+=== 1. Interactive journey, user-scoped (OBO): planner fans out over A2A ==
+  [ok] fan-out: ['crm', 'data', 'erp'] acting as user alice@co..., <n> ms end to end
   [ok] idempotent retry of the whole journey: case 500A000002 replayed, not duplicated
 === 2. authz_deny: same question, different user (record-level ACL in the CRM)
   [ok] bob (West care rep): I can't show account ACC-1001 to you (authz_deny).
@@ -108,18 +109,21 @@ What the demo prints (abridged, from a real run):
   [ok] retry after gateway restart (idempotency cache lost): replay_source=vendor; SAP holds 1 invoice(s) for INV-9001
 === 4. business_reject: SAP answers HTTP 200 with a BAPI error in the payload
   [ok] gateway result: HTTP 422 business_reject: Tax code V9 not defined for country US
-=== 6. Circuit breaker: SAP starts failing
-  [ok] HTTP 503 in 10 ms: sap circuit open; failing fast
+=== 5. authz_deny at the Tool Gateway: tool not on the caller's agent card
+=== 6. Circuit breaker: SAP starts failing ================================
+  [ok] HTTP 503 in <n> ms: sap circuit open; failing fast
+  [ok] HTTP 503 in <n> ms: sap circuit open; failing fast
 === 7. MCP Gateway: catalog, read-only SQL, PII refusal, injection screening, HITL writes
-  [ok] ServiceNow incident with an injected instruction: 1 field(s) withheld
-=== 8. Event-driven agents
-  [ok] event storm (8 ShipmentLate in a burst, budget 5/min per tenant): {'parked_budget': 5, 'accepted': 3}
-=== 9. BPM + agent
+  [ok] ServiceNow incident with an injected instruction: 1 field(s) withheld: {'path': '/description', 'patterns': 'override,prompt_exfil,tool_steering'}
+=== 8. Event-driven agents: SAP events -> Event Gateway -> queue -> worker (agent identity)
+  [ok] event storm (8 ShipmentLate in a burst, budget 5/min per tenant): {'accepted': 3, 'parked_budget': 5}
+=== 9. BPM + agent: Durable orchestration owns the money; agent does extract/classify/draft
   [ok] carol approves with her own token at the Tool Gateway: approved
   [ok] INV-7790: nobody approves, virtual clock +49h: timed_out_compensated (parked invoice deleted)
-=== 10. Integration observability
+=== 10. Integration observability (from this run) =========================
   [ok] tool-gateway identity mix: {'obo': 14, 'agent': 32}
 ```
+<!-- /output -->
 
 `python scripts/demo.py --inproc` runs the same scenarios in one process (used by the tests).
 
@@ -127,7 +131,7 @@ What the demo prints (abridged, from a real run):
 
 ```bash
 ruff check . && ruff format --check .
-pytest -q                                     # 214 offline tests, including repo hygiene
+pytest -q                                     # 221 offline tests (one skips without the Bicep CLI)
 python scripts/run_eval_gate.py --no-write    # eval + contract gate
 python scripts/run_safety_evals.py --no-write # attacks contained, no false quarantines
 python scripts/export_contracts.py --check && python scripts/build_dashboards.py --check
@@ -198,12 +202,15 @@ The [interview guide](docs/interview-guide.md) maps common interview questions t
 * Nothing is deployed. The Azure code paths (MSAL, Key Vault, Service Bus, Event Grid, Durable Functions, Foundry) are written against the real SDKs but have only run offline ([docs/sdk-notes.md](docs/sdk-notes.md)).
 * Every SaaS system is a sandbox stand-in; no vendor sandbox has been connected.
 * The Terraform twin passes validate, offline `terraform test`, tflint and checkov, but no plan has run against a subscription. The deploy pipeline's GitHub Environments and reviewers do not exist yet.
-* Eval and safety scores come from small synthetic scenario sets. The watchdog latency (1-2 ms) was measured on a laptop, not in Azure.
+* Eval and safety scores come from small synthetic scenario sets. The watchdog latency (under 2 ms, median below 1 ms) was measured on a laptop, not in Azure.
 
 ## Documentation
 
 | Document | What it covers |
 |---|---|
+| [`docs/components/`](docs/components/README.md) | One page per component (14) with the same 17 sections: purpose, mermaid architecture, step-by-step flow, key files, generated code excerpts and real output, configuration, commands, tests and gates, guardrails, security, observability, failure modes, Azure mapping, limitations, talking points and "Adopt this" |
+| [`docs/implementation-guide.md`](docs/implementation-guide.md) | Build order, layer by layer, with the proof command for each step |
+| [`docs/adopt-this.md`](docs/adopt-this.md) | How another team reuses, configures and extends the platform |
 | [`docs/best-practices.md`](docs/best-practices.md) | Enterprise cloud and agentic AI practices, each marked implemented, written-not-deployed or planned, with links to the code |
 | [`docs/adr/`](docs/adr/README.md) | Architecture decision records (Bicep + Terraform, offline mocks, OIDC, eval gates, gated deploy, ...) |
 | [`docs/deployment.md`](docs/deployment.md) | The GitHub Actions pipeline and the one-time Azure setup it needs |

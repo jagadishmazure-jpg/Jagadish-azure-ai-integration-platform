@@ -321,7 +321,7 @@ async def event_drills() -> None:
     expect("parked_budget" in outcomes, "storm parked")
     ok(
         "event storm (8 ShipmentLate in a burst, budget 5/min per tenant)",
-        {o: outcomes.count(o) for o in set(outcomes)},
+        {o: outcomes.count(o) for o in sorted(set(outcomes))},
     )
 
     for q in ("order-events", "shipment-events"):

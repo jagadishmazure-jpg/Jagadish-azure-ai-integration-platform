@@ -68,7 +68,9 @@ def test_reference_material_is_not_in_the_repo():
 
 
 def test_every_folder_has_a_readme_with_a_file_table():
-    dirs = {f.parent for f in repo_files()} - NO_README
+    # .github has no README on purpose: GitHub would show it instead of the root README.
+    dirs = {f.parent for f in repo_files()} - NO_README - {ROOT / ".github"}
+    assert not (ROOT / ".github" / "README.md").exists()
     missing, no_table = [], []
     for d in sorted(dirs):
         if SKIP_DIRS & set(d.relative_to(ROOT).parts):

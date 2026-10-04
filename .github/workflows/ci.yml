@@ -25,6 +25,8 @@ jobs:
         run: python scripts/export_contracts.py --check
       - name: Dashboards are generated from the KQL
         run: python scripts/build_dashboards.py --check
+      - name: Doc drift (pasted output and code excerpts match the code)
+        run: python scripts/doc_drift.py --check
       - name: Functions app indexes (Python v2 programming model)
         working-directory: functions
         run: python -c "import function_app as f; print([x.get_function_name() for x in f.app.get_functions()])"

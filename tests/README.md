@@ -18,3 +18,4 @@ Offline, fast (~10 s). Files are numbered by the integration topic they cover; e
 | [`test_37_runtime_safety.py`](test_37_runtime_safety.py) | Sandbox isolation and limits, ACA sessions adapter, policy prover default deny + proofs, supervisor, signed telemetry, gateway kill switch |
 | [`test_38_out_of_band_monitor.py`](test_38_out_of_band_monitor.py) | Monitor detectors, quarantine + measured containment latency, off-path and cross-process monitor, safety eval gate |
 | [`test_repo_hygiene.py`](test_repo_hygiene.py) | No personal emails or secrets, READMEs everywhere, required docs, stand-ins labeled |
+| [`test_repo_docs.py`](test_repo_docs.py) | Component docs have the 17 sections in order with a mermaid diagram, are indexed, guides exist, CODEOWNERS, no placeholders or prose dates, README test count equals the collected count |

@@ -1,11 +1,21 @@
 // Optional private networking profile (off by default): VNet with a Container Apps infrastructure
 // subnet and a private-endpoint subnet, plus private endpoints and DNS zones for Key Vault and
-// Service Bus. Service Bus private endpoints require the Premium tier; main.bicep forces it.
+// Service Bus and the Event Grid topic. Service Bus private endpoints require the Premium tier;
+// main.bicep forces it. One NSG covers both subnets, matching infra/terraform/modules/network.
 param location string
 param tags object
 param resourceToken string
 param keyVaultId string
 param serviceBusId string
+param eventGridTopicId string
+
+// One NSG for both subnets (default rules only; tighten per client policy), as in Terraform.
+resource nsg 'Microsoft.Network/networkSecurityGroups@2024-01-01' = {
+  name: 'nsg-vnet-${resourceToken}'
+  location: location
+  tags: tags
+  properties: { securityRules: [] }
+}
 
 resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   name: 'vnet-${resourceToken}'
@@ -14,8 +24,18 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
   properties: {
     addressSpace: { addressPrefixes: ['10.40.0.0/16'] }
     subnets: [
-      { name: 'aca-infra', properties: { addressPrefix: '10.40.0.0/23', delegations: [{ name: 'aca', properties: { serviceName: 'Microsoft.App/environments' } }] } }
-      { name: 'private-endpoints', properties: { addressPrefix: '10.40.4.0/24' } }
+      {
+        name: 'aca-infra'
+        properties: {
+          addressPrefix: '10.40.0.0/23'
+          networkSecurityGroup: { id: nsg.id }
+          delegations: [{ name: 'aca', properties: { serviceName: 'Microsoft.App/environments' } }]
+        }
+      }
+      {
+        name: 'private-endpoints'
+        properties: { addressPrefix: '10.40.4.0/24', networkSecurityGroup: { id: nsg.id }, privateEndpointNetworkPolicies: 'Disabled' }
+      }
     ]
   }
 }
@@ -23,6 +43,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
 var targets = [
   { name: 'kv', id: keyVaultId, group: 'vault', zone: 'privatelink.vaultcore.azure.net' }
   { name: 'sb', id: serviceBusId, group: 'namespace', zone: 'privatelink.servicebus.windows.net' }
+  { name: 'evgt', id: eventGridTopicId, group: 'topic', zone: 'privatelink.eventgrid.azure.net' }
 ]
 
 resource zones 'Microsoft.Network/privateDnsZones@2020-06-01' = [for t in targets: {

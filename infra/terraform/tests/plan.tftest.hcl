@@ -54,8 +54,13 @@ run "prod_private_frontdoor" {
   }
 
   assert {
-    condition     = local.sb_sku == "Premium" && length(module.private_endpoint) == 2 && length(module.frontdoor) == 1
-    error_message = "private networking forces Premium and adds 2 private endpoints"
+    condition     = local.sb_sku == "Premium" && length(module.private_endpoint) == 3 && length(module.frontdoor) == 1
+    error_message = "private networking forces Premium and adds 3 private endpoints (Key Vault, Service Bus, Event Grid)"
+  }
+
+  assert {
+    condition     = module.eventgrid.public_network_access_enabled == false
+    error_message = "private networking turns Event Grid public access off"
   }
 }
 

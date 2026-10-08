@@ -132,13 +132,14 @@ module events 'modules/eventgrid.bicep' = {
     resourceToken: resourceToken
     serviceBusNamespaceId: bus.outputs.id
     publisherPrincipalIds: map(filter(idList, i => i.workload == 'event-gateway'), i => i.principalId)
+    publicNetworkAccess: privateNetworking ? 'Disabled' : 'Enabled'
   }
 }
 
 module network 'modules/network.bicep' = if (privateNetworking) {
   scope: rg
   name: 'network'
-  params: { location: location, tags: tags, resourceToken: resourceToken, keyVaultId: kv.outputs.id, serviceBusId: bus.outputs.id }
+  params: { location: location, tags: tags, resourceToken: resourceToken, keyVaultId: kv.outputs.id, serviceBusId: bus.outputs.id, eventGridTopicId: events.outputs.id }
 }
 
 module caEnv 'modules/containerapps-env.bicep' = if (useAca) {
@@ -210,7 +211,7 @@ module workerApps 'modules/containerapp.bicep' = [for w in workers: if (useAca) 
 module aks 'modules/aks.bicep' = if (!useAca) {
   scope: rg
   name: 'aks'
-  params: { location: location, tags: tags, resourceToken: resourceToken, logAnalyticsWorkspaceId: monitoring.outputs.workspaceId }
+  params: { location: location, tags: tags, resourceToken: resourceToken, logAnalyticsWorkspaceId: monitoring.outputs.workspaceId, tenantId: subscription().tenantId }
 }
 
 var fnIdentity = first(filter(idList, x => x.workload == 'bpm-functions'))

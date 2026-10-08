@@ -6,6 +6,7 @@ Notable changes, newest first. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- Bicep matches Terraform: an NSG on both private-networking subnets and an AKS profile with Azure CNI overlay plus Azure network policy, local accounts off, Entra ID with Azure RBAC, Azure Policy and Key Vault CSI rotation. Event Grid public access now follows the private networking flag in both tools, with a private endpoint for the topic. Two parity tests and an extra `terraform test` assertion; not deployed.
 - Opt-in Azure AI Content Safety Prompt Shields after the regex screen in `shared/untrusted.py` (`src/aiip/shared/content_safety.py`, ported from azure-agent-platform): with `AIIP_PROMPT_SHIELDS=1` and `AZURE_CONTENT_SAFETY_ENDPOINT`, MCP output, A2A artifacts and supervisor-retrieved text are also screened, keyless and fail closed. Offline the regex screen remains the only screen. 5 tests with a fake transport; not run against Azure.
 - Threat model (`docs/security/threat-model.md`): STRIDE, OWASP Top 10 for LLM Applications and MITRE ATLAS mapped to this repository's components, each row with its control, test evidence and built / planned status.
 - SBOM job in CI: an SPDX JSON software bill of materials of the source tree on every run (artifact `sbom.spdx.json`).

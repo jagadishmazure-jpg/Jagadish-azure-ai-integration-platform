@@ -83,6 +83,8 @@ module "eventgrid" {
   service_bus_namespace_id = module.servicebus.id
   queue_ids                = module.servicebus.queue_ids
   publisher_principal_ids  = { event-gateway = module.identity.principal_ids["event-gateway"] }
+  # Private networking turns public access off; publishers use the private endpoint below.
+  public_network_access_enabled = !var.private_networking
   routes = {
     order-created    = { event_type = "com.contoso.sap.salesorder.created.v1", queue = "order-events" }
     shipment-late    = { event_type = "com.contoso.sap.delivery.late.v1", queue = "shipment-events" }
@@ -102,12 +104,13 @@ module "network" {
   dns_zones = {
     keyvault   = "privatelink.vaultcore.azure.net"
     servicebus = "privatelink.servicebus.windows.net"
+    eventgrid  = "privatelink.eventgrid.azure.net"
   }
 }
 
 module "private_endpoint" {
   source   = "./modules/private-endpoint"
-  for_each = var.private_networking ? { kv = { id = module.keyvault.id, group = "vault", zone = "keyvault" }, sb = { id = module.servicebus.id, group = "namespace", zone = "servicebus" } } : {}
+  for_each = var.private_networking ? { kv = { id = module.keyvault.id, group = "vault", zone = "keyvault" }, sb = { id = module.servicebus.id, group = "namespace", zone = "servicebus" }, evgt = { id = module.eventgrid.id, group = "topic", zone = "eventgrid" } } : {}
 
   resource_group_name = azurerm_resource_group.this.name
   location            = var.location

@@ -59,7 +59,7 @@ each pack at a vendor **sandbox** with `AIIP_SAAS_<VENDOR>_URL` before any produ
 | `AIIP_SERVICEBUS_SKU` | `Basic` | `Standard`, `Premium` (forced to Premium with private networking) |
 | `AIIP_LOG_DAILY_QUOTA_GB` | `1` | Log Analytics ingestion cap, `-1` = none |
 | `AIIP_DEPLOY_FRONT_DOOR` | `false` | Front Door Standard in front of APIM |
-| `AIIP_PRIVATE_NETWORKING` | `false` | VNet, internal Container Apps environment, private endpoints for Key Vault and Service Bus |
+| `AIIP_PRIVATE_NETWORKING` | `false` | VNet, internal Container Apps environment, private endpoints for Key Vault, Service Bus and Event Grid (public access off on all three), one NSG on both subnets |
 | `AIIP_COMPUTE_PROFILE` | `containerapps` | `aks` provisions an AKS cluster (workload identity, KEDA) instead; workloads are then applied with the same image |
 
 ## CI/CD with GitHub Actions and OIDC (disabled by default)

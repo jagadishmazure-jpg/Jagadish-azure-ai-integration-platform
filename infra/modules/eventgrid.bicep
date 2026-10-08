@@ -14,6 +14,9 @@ param routes array = [
   { name: 'late-handled', eventType: 'com.contoso.aiip.delivery.late.handled.v1', queue: 'completions' }
 ]
 param publisherPrincipalIds array = []
+@description('Disabled when the private networking profile is on (publishers reach the topic through its private endpoint)')
+@allowed(['Enabled', 'Disabled'])
+param publicNetworkAccess string = 'Enabled'
 
 resource topic 'Microsoft.EventGrid/topics@2025-02-15' = {
   name: 'evgt-${resourceToken}'
@@ -23,7 +26,7 @@ resource topic 'Microsoft.EventGrid/topics@2025-02-15' = {
   properties: {
     inputSchema: 'CloudEventSchemaV1_0'
     disableLocalAuth: true
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: publicNetworkAccess
   }
 }
 

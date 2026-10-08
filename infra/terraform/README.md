@@ -24,8 +24,7 @@ Trade-offs to state up front:
 |---|---|---|
 | Names | `<abbr>-<uniqueString>` (azd style) | CAF: `rg-aiip-dev-eus2-001`, `id-tool-gateway-aiip-dev-eus2-001`, `kv-aiip-dev-001`, ... |
 | Tags | `azd-env-name`, `project` | `env`, `owner`, `project`, `cost-center`, `workload`, `managed-by` |
-| Private networking | private-endpoint subnet `10.40.4.0/24` | `10.40.2.0/24`, plus an NSG on both subnets |
-| AKS profile | minimal cluster | also: patch upgrade channel, Azure CNI overlay + network policy, Azure RBAC, local accounts off, Key Vault CSI rotation |
+| Private networking | private-endpoint subnet `10.40.4.0/24` | `10.40.2.0/24` (both: one NSG on both subnets; private endpoints for Key Vault, Service Bus and Event Grid; Event Grid public access off) |
 | Functions storage | shared keys off | also: local users off, blob + container soft delete |
 
 ## Naming, tags and the cost-min profile

@@ -1,6 +1,6 @@
 # Infrastructure (`infra/`, `azure.yaml`, workflows)
 
-Bicep for `azd` and a Terraform twin with cost-minimized defaults and opt-in Front Door, Private Link and AKS. Validated in CI; not deployed.
+Bicep for `azd` and a Terraform twin with cost-minimized defaults and opt-in Front Door, Private Link and AKS. Validated in CI; not deployed. The Bicep and Terraform match on the security settings that matter: an NSG on both private-networking subnets, Event Grid, Key Vault and Service Bus public access off under private networking, and an AKS profile with Azure CNI overlay plus Azure network policy, local accounts off, Entra ID with Azure RBAC, Azure Policy and Key Vault CSI rotation (`test_bicep_matches_terraform_for_nsgs_and_aks_network_policy`).
 
 **Sections:** [1. Purpose](#1-purpose) · [2. Architecture](#2-architecture) · [3. How it works](#3-how-it-works) · [4. Key files](#4-key-files) · [5. Code excerpts](#5-code-excerpts) · [6. Configuration](#6-configuration) · [7. Commands](#7-commands) · [8. Real output](#8-real-output) · [9. Tests and eval gates](#9-tests-and-eval-gates) · [10. Guardrails](#10-guardrails) · [11. Security and governance](#11-security-and-governance) · [12. Observability](#12-observability) · [13. Failure modes](#13-failure-modes) · [14. Mapping to Azure services](#14-mapping-to-azure-services) · [15. Limitations](#15-limitations) · [16. Interview talking points](#16-interview-talking-points) · [17. Adopt this](#17-adopt-this)
 
@@ -108,6 +108,8 @@ servicebus.bicep
 ```text
 tests/test_36_reference_architecture.py::test_bicep_builds_without_errors_or_warnings
 tests/test_36_reference_architecture.py::test_cost_minimized_defaults
+tests/test_36_reference_architecture.py::test_bicep_matches_terraform_for_nsgs_and_aks_network_policy
+tests/test_36_reference_architecture.py::test_event_grid_public_access_follows_private_networking
 tests/test_36_reference_architecture.py::test_no_keys_or_connection_strings_for_data_plane
 tests/test_36_reference_architecture.py::test_every_workload_has_its_own_identity_and_azd_service
 tests/test_36_reference_architecture.py::test_workload_registrations_exist_in_code

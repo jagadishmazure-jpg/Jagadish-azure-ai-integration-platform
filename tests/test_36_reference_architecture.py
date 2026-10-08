@@ -53,6 +53,40 @@ def test_cost_minimized_defaults():
     assert "dailyQuotaGb: dailyQuotaGb" in (INFRA / "modules" / "monitoring.bicep").read_text()
 
 
+def test_bicep_matches_terraform_for_nsgs_and_aks_network_policy():
+    tf = INFRA / "terraform"
+    net_b, net_t = (
+        (INFRA / "modules" / "network.bicep").read_text(),
+        (tf / "modules/network/main.tf").read_text(),
+    )
+    assert "azurerm_subnet_network_security_group_association" in net_t
+    assert (
+        "Microsoft.Network/networkSecurityGroups" in net_b
+        and net_b.count("networkSecurityGroup: { id: nsg.id }") == 2
+    )
+    aks_b, aks_t = (INFRA / "modules" / "aks.bicep").read_text(), (tf / "modules/aks/main.tf").read_text()
+    for t, b in [
+        ('network_policy      = "azure"', "networkPolicy: 'azure'"),
+        ('network_plugin_mode = "overlay"', "networkPluginMode: 'overlay'"),
+        ("local_account_disabled    = true", "disableLocalAccounts: true"),
+        ("azure_rbac_enabled = true", "enableAzureRBAC: true"),
+        ("azure_policy_enabled      = true", "azurepolicy: { enabled: true }"),
+        ('automatic_upgrade_channel = "patch"', "upgradeChannel: 'patch'"),
+        ("secret_rotation_enabled = true", "enableSecretRotation: 'true'"),
+    ]:
+        assert t in aks_t and b in aks_b, (t, b)
+
+
+def test_event_grid_public_access_follows_private_networking():
+    assert "publicNetworkAccess: publicNetworkAccess" in (INFRA / "modules" / "eventgrid.bicep").read_text()
+    assert (
+        "group: 'topic', zone: 'privatelink.eventgrid.azure.net'"
+        in (INFRA / "modules" / "network.bicep").read_text()
+    )
+    tf = (INFRA / "terraform" / "main.tf").read_text()
+    assert "public_network_access_enabled = !var.private_networking" in tf and 'group = "topic"' in tf
+
+
 def test_no_keys_or_connection_strings_for_data_plane():
     assert "disableLocalAuth: true" in (INFRA / "modules" / "servicebus.bicep").read_text()
     assert "disableLocalAuth: true" in (INFRA / "modules" / "eventgrid.bicep").read_text()

@@ -1,0 +1,8 @@
+# gitleaks false positives, one fingerprint (commit:file:rule:line) per line.
+# Each was checked by hand; nothing here is a real credential.
+# src/aiip/shared/audit.py:49 (generic-api-key): a type annotation (self._key: Ed25519PrivateKey | None), no value
+a2c7a3837009234a309dd97af8997ea94a20a285:src/aiip/shared/audit.py:generic-api-key:49
+# evals/safety-scenarios.yaml:47 (generic-api-key): synthetic base64 of a made-up word in an exfiltration attack fixture
+a2c7a3837009234a309dd97af8997ea94a20a285:evals/safety-scenarios.yaml:generic-api-key:47
+# evals/safety-scenarios.yaml:32 (jwt): synthetic JWT in an attack fixture (payload sub=alice, signature is plain text)
+a2c7a3837009234a309dd97af8997ea94a20a285:evals/safety-scenarios.yaml:jwt:32

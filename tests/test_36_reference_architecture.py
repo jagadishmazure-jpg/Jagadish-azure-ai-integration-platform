@@ -106,7 +106,7 @@ def test_deploy_workflow_is_gated_oidc_and_promotes_with_approval():
     # every job but the gate report is skipped unless the repo variable is set
     assert wf.count("if: vars.DEPLOY_ENABLED == 'true'") >= 2
     assert "id-token: write" in wf and "environment: dev" in wf and "environment: prod" in wf
-    assert "azure/login@v2" in wf
+    assert "azure/login@" in wf  # pinned to a commit SHA, see test_workflows_are_hardened
     assert "client-secret" not in wf.lower() and "AZURE_CLIENT_SECRET" not in wf
     teardown = (ROOT / ".github" / "workflows" / "teardown.yml").read_text()
     assert "workflow_dispatch" in teardown and "push:" not in teardown
@@ -139,3 +139,22 @@ def test_cost_estimate_has_no_invented_prices():
 )
 def test_dockerfile_uses_non_root_user():
     assert "USER 10001" in (ROOT / "Dockerfile").read_text()
+
+
+def test_workflows_are_hardened():
+    """Supply-chain guard: every third-party action is pinned to a full commit SHA with a version
+    comment, every workflow sets top-level permissions, CI runs gitleaks, and CodeQL and Dependabot
+    are configured. Dependabot bumps keep the SHA and the comment together, so this stays green."""
+    wf_dir = ROOT / ".github" / "workflows"
+    for f in sorted(wf_dir.glob("*.yml")):
+        text = f.read_text()
+        assert re.search(r"^permissions:", text, re.M), f"{f.name}: no top-level permissions"
+        for line in text.splitlines():
+            m = re.search(r"\buses:\s*([^\s#]+)\s*(#.*)?$", line)
+            if m and not m.group(1).startswith("./"):
+                assert re.fullmatch(r"[\w.-]+/[\w./-]+@[0-9a-f]{40}", m.group(1)), f"{f.name}: {line.strip()}"
+                assert m.group(2) and re.match(r"#\s*v\d", m.group(2)), f"{f.name}: no version comment"
+    assert "gitleaks/gitleaks-action@" in (wf_dir / "ci.yml").read_text()
+    assert "github/codeql-action/analyze@" in (wf_dir / "codeql.yml").read_text()
+    deps = (ROOT / ".github" / "dependabot.yml").read_text()
+    assert "package-ecosystem: github-actions" in deps and "interval: weekly" in deps

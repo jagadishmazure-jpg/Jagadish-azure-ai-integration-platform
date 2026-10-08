@@ -14,7 +14,7 @@ Offline, fast (~10 s). Files are numbered by the integration topic they cover; e
 | [`test_33_identity.py`](test_33_identity.py) | OBO vs client credentials vs hybrid, OBO targets, app roles, actor/subject, ACL enforcement |
 | [`test_34_saas_connectors.py`](test_34_saas_connectors.py) | Per-pack contract tests: mapping, idempotent writes, error taxonomy, rate-limit hints, minimal fields |
 | [`test_35_observability.py`](test_35_observability.py) | Span attributes, result classes, 200-with-error as failure, completion metrics, dashboards |
-| [`test_36_reference_architecture.py`](test_36_reference_architecture.py) | Bicep compiles, cost-minimized defaults, azd services, workflows, cost doc rules |
+| [`test_36_reference_architecture.py`](test_36_reference_architecture.py) | Bicep compiles, cost-minimized defaults, azd services, workflows (gated, OIDC, pinned to commit SHAs, gitleaks, CodeQL, Dependabot), cost doc rules |
 | [`test_37_runtime_safety.py`](test_37_runtime_safety.py) | Sandbox isolation and limits, ACA sessions adapter, policy prover default deny + proofs, supervisor, signed telemetry, gateway kill switch |
 | [`test_38_out_of_band_monitor.py`](test_38_out_of_band_monitor.py) | Monitor detectors, quarantine + measured containment latency, off-path and cross-process monitor, safety eval gate |
 | [`test_repo_hygiene.py`](test_repo_hygiene.py) | No personal emails or secrets, READMEs everywhere, required docs, stand-ins labeled |

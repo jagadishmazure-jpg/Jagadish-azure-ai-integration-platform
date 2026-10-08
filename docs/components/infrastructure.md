@@ -24,7 +24,7 @@ flowchart TB
 1. `azure.yaml` defines one image with many commands, one per service.
 2. `main.bicep` composes the modules at subscription scope with cost-minimized defaults.
 3. `infra/terraform` mirrors it with plan tests.
-4. CI builds Bicep with warnings as errors; the infra workflow runs Terraform checks, tflint and checkov; deploy is gated.
+4. CI builds Bicep with warnings as errors; the infra workflow runs Terraform checks, tflint and checkov; deploy is gated. Every action is pinned to a commit SHA, CI runs gitleaks, and CodeQL scans Python and the workflows.
 
 ## 4. Key files
 
@@ -33,7 +33,7 @@ flowchart TB
 | `infra/main.bicep` | entry point |
 | `infra/modules/` | modules |
 | `infra/terraform/` | Terraform twin |
-| `.github/workflows/` | CI, infra, deploy, teardown |
+| `.github/workflows/` | CI (with gitleaks), CodeQL, infra, deploy, teardown |
 | `tests/test_36_reference_architecture.py` | static checks |
 
 ## 5. Code excerpts
@@ -117,6 +117,7 @@ tests/test_36_reference_architecture.py::test_deploy_workflow_is_gated_oidc_and_
 tests/test_36_reference_architecture.py::test_ci_runs_tests_lint_gate_and_bicep
 tests/test_36_reference_architecture.py::test_cost_estimate_has_no_invented_prices
 tests/test_36_reference_architecture.py::test_dockerfile_uses_non_root_user
+tests/test_36_reference_architecture.py::test_workflows_are_hardened
 ```
 <!-- /output -->
 
@@ -132,6 +133,7 @@ Static architecture tests above (one skips where the Bicep CLI is missing) plus 
 ## 11. Security and governance
 
 - Managed identity and Key Vault; OIDC for pipelines.
+- Actions pinned to commit SHAs with read-only default permissions; gitleaks, CodeQL and Dependabot (see `SECURITY.md`).
 
 ## 12. Observability
 

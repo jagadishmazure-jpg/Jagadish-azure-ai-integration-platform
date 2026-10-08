@@ -4,6 +4,7 @@ Design notes for each part of the platform. Start with `architecture.md`.
 
 | File | What it does |
 |---|---|
+| [security/](security/README.md) | Threat model: STRIDE, OWASP Top 10 for LLM Applications and MITRE ATLAS mapped to this repo's components, with controls, tests and built / planned status. |
 | [adr/](adr/README.md) | Architecture decision records: one file per decision, with context, decision and consequences. |
 | [best-practices.md](best-practices.md) | Enterprise cloud and agentic AI checklist for this repo, each item marked implemented, written-not-deployed or planned, with links to the code. |
 | [architecture.md](architecture.md) | Reference topology, the five gateways, hosting, local vs Azure mode |

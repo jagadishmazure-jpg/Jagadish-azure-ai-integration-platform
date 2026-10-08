@@ -35,6 +35,14 @@ param privateNetworking bool = false
 @description('Compute for gateways/agents/workers. The AKS profile only provisions the cluster; workloads are then applied with the same image.')
 param computeProfile string = 'containerapps'
 
+@description('Action group, metric + log alert rules and diagnostic settings to Log Analytics. Cheap; on by default.')
+param enableAlerts bool = true
+@description('Optional on-call email for the action group. Empty = alerts fire in Azure Monitor only.')
+param alertEmail string = ''
+@description('Opt-in: Microsoft Defender for Cloud plans. SUBSCRIPTION-WIDE and billed per resource, so off by default.')
+param enableDefender bool = false
+param defenderPlans array = ['Arm', 'Containers', 'KeyVaults']
+
 var tags = { 'azd-env-name': environmentName, project: 'azure-ai-integration-platform' }
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var useAca = computeProfile == 'containerapps'
@@ -269,6 +277,52 @@ module frontDoor 'modules/frontdoor.bicep' = if (deployFrontDoor) {
   scope: rg
   name: 'frontdoor'
   params: { tags: tags, resourceToken: resourceToken, originHostName: apim.outputs.hostname }
+}
+
+// ---- alerting, diagnostics and Defender for Cloud (built offline; not deployed) ----
+// Spans from aiip.shared.telemetry carry integration.* keys (customDimensions in App Insights).
+var resultClass = 'tostring(customDimensions["integration.result_class"])'
+
+module alerts 'modules/alerts.bicep' = if (enableAlerts) {
+  scope: rg
+  name: 'alerts'
+  params: {
+    location: location
+    tags: tags
+    resourceToken: resourceToken
+    actionGroupShortName: 'aiip'
+    alertEmail: alertEmail
+    appInsightsId: monitoring.outputs.appInsightsId
+    metricAlerts: [
+      { name: 'sb-dead-letters', scope: bus.outputs.id, namespace: 'Microsoft.ServiceBus/namespaces', metric: 'DeadletteredMessages', aggregation: 'Maximum', operator: 'GreaterThan', threshold: 0, severity: 2, description: 'Business events are dead-lettering after 3 deliveries' }
+      { name: 'evgt-dropped', scope: events.outputs.id, namespace: 'Microsoft.EventGrid/topics', metric: 'DroppedEventCount', aggregation: 'Total', operator: 'GreaterThan', threshold: 0, severity: 1, description: 'Event Grid dropped SAP events after retries' }
+      { name: 'evgt-publish-err', scope: events.outputs.id, namespace: 'Microsoft.EventGrid/topics', metric: 'PublishFailCount', aggregation: 'Total', operator: 'GreaterThan', threshold: 5, severity: 2, description: 'Event gateway cannot publish to the topic' }
+      { name: 'kv-availability', scope: kv.outputs.id, namespace: 'Microsoft.KeyVault/vaults', metric: 'Availability', aggregation: 'Average', operator: 'LessThan', threshold: 99, severity: 1, description: 'Key Vault availability below 99%' }
+    ]
+    logAlerts: [
+      { name: 'failed-requests', query: 'requests | where success == false', threshold: 5, severity: 2, description: 'More than 5 failed requests in 15 minutes' }
+      { name: 'exceptions', query: 'exceptions', threshold: 10, severity: 3, description: 'Exception spike in the gateways, agents or workers' }
+      { name: 'integration-err', query: 'dependencies | where isnotempty(${resultClass}) and ${resultClass} != "ok"', threshold: 10, severity: 2, description: 'Calls to systems of record failing, including HTTP 200 business rejects' }
+      { name: 'authz-denies', query: 'dependencies | where ${resultClass} == "authz_deny"', threshold: 5, severity: 2, description: 'Authorization denials spiking: misconfigured identity or probing' }
+    ]
+  }
+}
+
+module diagnostics 'modules/diagnostics.bicep' = if (enableAlerts) {
+  scope: rg
+  name: 'diagnostics'
+  params: {
+    logAnalyticsId: monitoring.outputs.workspaceId
+    keyVaultName: kv.outputs.name
+    registryName: acr.outputs.name
+    serviceBusName: bus.outputs.name
+    eventGridTopicName: events.outputs.name
+  }
+}
+
+module defender 'modules/defender.bicep' = if (enableDefender) {
+  name: 'defender'
+  params: { plans: defenderPlans }
 }
 
 output AZURE_RESOURCE_GROUP string = rg.name

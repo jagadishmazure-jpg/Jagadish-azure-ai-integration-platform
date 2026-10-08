@@ -11,6 +11,9 @@
     "logDailyQuotaGb": { "value": "${AIIP_LOG_DAILY_QUOTA_GB=1}" },
     "deployFrontDoor": { "value": "${AIIP_DEPLOY_FRONT_DOOR=false}" },
     "privateNetworking": { "value": "${AIIP_PRIVATE_NETWORKING=false}" },
-    "computeProfile": { "value": "${AIIP_COMPUTE_PROFILE=containerapps}" }
+    "computeProfile": { "value": "${AIIP_COMPUTE_PROFILE=containerapps}" },
+    "enableAlerts": { "value": "${AIIP_ENABLE_ALERTS=true}" },
+    "alertEmail": { "value": "${AIIP_ALERT_EMAIL=}" },
+    "enableDefender": { "value": "${AIIP_ENABLE_DEFENDER=false}" }
   }
 }

@@ -68,7 +68,7 @@ money-moving step in the invoice process.
 | LLM07 System prompt leakage | Prompts reveal integration secrets | No secrets in prompts or code; Key Vault references only | Built (by design) |
 | LLM08 Vector and embedding weaknesses | Not a retrieval-heavy repo; the SQL MCP server is the closest analogue | SQL server is read-only and allow-listed (`test_sql_server_is_read_only_and_allow_listed`) | Not applicable (no vector store) |
 | LLM09 Misinformation | An HTTP 200 that hides a business error is reported as success | Business errors inside HTTP 200 are classified as rejects (`test_business_error_inside_http_200_is_a_business_reject`, `test_http_200_with_business_error_is_recorded_as_failure`) | Built |
-| LLM10 Unbounded consumption | Loops, storms and retries burn quota | Rate limits, hop cap, step budget, storm parking, monitor loop detector | Built (counts); Azure budget alerts planned |
+| LLM10 Unbounded consumption | Loops, storms and retries burn quota | Rate limits, hop cap, step budget, storm parking, monitor loop detector | Built (counts); App Insights failure and authorization-denial alerts written, not deployed; budget alerts planned |
 
 ## MITRE ATLAS
 

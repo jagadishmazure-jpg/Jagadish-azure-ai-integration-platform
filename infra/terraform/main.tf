@@ -249,3 +249,47 @@ module "frontdoor" {
   endpoint_name       = "aiip-${module.naming.base}${module.naming.suffix}"
   origin_host_name    = module.apim.hostname
 }
+
+# ---- alerting, diagnostics and Defender for Cloud (written and tested offline; not deployed) ----
+locals {
+  # Spans from aiip.shared.telemetry carry integration.* keys (customDimensions in App Insights).
+  result_class = "tostring(customDimensions[\"integration.result_class\"])"
+}
+
+module "alerts" {
+  source                  = "./modules/alerts"
+  count                   = var.enable_alerts ? 1 : 0
+  resource_group_name     = azurerm_resource_group.this.name
+  location                = var.location
+  tags                    = local.tags
+  name_suffix             = module.naming.base
+  action_group_name       = "ag-${module.naming.base}"
+  action_group_short_name = "aiip"
+  alert_email             = var.alert_email
+  log_analytics_id        = module.monitoring.log_analytics_id
+  app_insights_id         = module.monitoring.app_insights_id
+  metric_alerts = {
+    sb-dead-letters  = { scope = module.servicebus.id, namespace = "Microsoft.ServiceBus/namespaces", metric = "DeadletteredMessages", aggregation = "Maximum", operator = "GreaterThan", threshold = 0, severity = 2, description = "Business events are dead-lettering after 3 deliveries" }
+    evgt-dropped     = { scope = module.eventgrid.id, namespace = "Microsoft.EventGrid/topics", metric = "DroppedEventCount", aggregation = "Total", operator = "GreaterThan", threshold = 0, severity = 1, description = "Event Grid dropped SAP events after retries" }
+    evgt-publish-err = { scope = module.eventgrid.id, namespace = "Microsoft.EventGrid/topics", metric = "PublishFailCount", aggregation = "Total", operator = "GreaterThan", threshold = 5, severity = 2, description = "Event gateway cannot publish to the topic" }
+    kv-availability  = { scope = module.keyvault.id, namespace = "Microsoft.KeyVault/vaults", metric = "Availability", aggregation = "Average", operator = "LessThan", threshold = 99, severity = 1, description = "Key Vault availability below 99%" }
+  }
+  log_alerts = {
+    failed-requests = { query = "requests | where success == false", threshold = 5, severity = 2, description = "More than 5 failed requests in 15 minutes" }
+    exceptions      = { query = "exceptions", threshold = 10, severity = 3, description = "Exception spike in the gateways, agents or workers" }
+    integration-err = { query = "dependencies | where isnotempty(${local.result_class}) and ${local.result_class} != \"ok\"", threshold = 10, severity = 2, description = "Calls to systems of record failing, including HTTP 200 business rejects" }
+    authz-denies    = { query = "dependencies | where ${local.result_class} == \"authz_deny\"", threshold = 5, severity = 2, description = "Authorization denials spiking: misconfigured identity or probing" }
+  }
+  diagnostic_targets = {
+    keyvault   = module.keyvault.id
+    registry   = module.registry.id
+    servicebus = module.servicebus.id
+    eventgrid  = module.eventgrid.id
+  }
+}
+
+module "defender" {
+  source = "./modules/defender"
+  count  = var.enable_defender ? 1 : 0
+  plans  = var.defender_plans
+}

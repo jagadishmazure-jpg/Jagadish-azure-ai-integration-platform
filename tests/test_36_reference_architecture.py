@@ -192,3 +192,24 @@ def test_workflows_are_hardened():
     assert "github/codeql-action/analyze@" in (wf_dir / "codeql.yml").read_text()
     deps = (ROOT / ".github" / "dependabot.yml").read_text()
     assert "package-ecosystem: github-actions" in deps and "interval: weekly" in deps
+
+
+def test_alerts_diagnostics_and_defender_match_in_both_tools():
+    main_b, main_t = _main(), (INFRA / "terraform" / "main.tf").read_text()
+    alerts_t = main_t.split('module "alerts"')[1].split('module "defender"')[0]
+    names_b = set(re.findall(r"\{ name: '([a-z0-9-]+)', (?:scope|query):", main_b))
+    names_t = set(re.findall(r"^\s+([a-z0-9-]+)\s+= \{ (?:scope|query) =", alerts_t, re.M))
+    assert names_b == names_t and len(names_b) == 8, (names_b, names_t)
+    diag_b = (INFRA / "modules" / "diagnostics.bicep").read_text()
+    diag_t = set(re.findall(r"^\s+([a-z-]+)\s+= module\.", alerts_t.split("diagnostic_targets")[1], re.M))
+    assert (
+        diag_t == set(re.findall(r"'([a-z-]+)'", diag_b.split("output targets array =")[1]))
+        and len(diag_t) == 4
+    )
+    assert diag_b.count("scope:") == 4 and "categoryGroup: 'allLogs'" in diag_b
+    # the integration-failure rule counts HTTP 200 business rejects, the same signal as the dashboards
+    assert "integration.result_class" in main_b and "integration.result_class" in main_t
+    assert "param enableAlerts bool = true" in main_b and "param enableDefender bool = false" in main_b
+    variables = (INFRA / "terraform" / "variables.tf").read_text()
+    assert re.search(r'variable "enable_defender" \{[^}]*default\s+= false', variables)
+    assert re.search(r'variable "enable_alerts" \{[^}]*default\s+= true', variables)

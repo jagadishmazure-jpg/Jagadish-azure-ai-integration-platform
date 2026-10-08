@@ -41,6 +41,36 @@ run "dev_cost_min" {
     condition     = length(module.frontdoor) == 0 && length(module.network) == 0 && local.sb_sku == "Basic"
     error_message = "dev must stay on the cost-min shape"
   }
+
+  assert {
+    condition     = length(module.alerts) == 1 && length(module.alerts[0].metric_alert_names) == 4 && length(module.alerts[0].log_alert_names) == 4
+    error_message = "alerts are on by default: 4 metric and 4 log alert rules"
+  }
+
+  assert {
+    condition     = join(",", module.alerts[0].diagnostic_setting_targets) == "eventgrid,keyvault,registry,servicebus"
+    error_message = "Key Vault, ACR, Service Bus and Event Grid send logs and metrics to Log Analytics"
+  }
+
+  assert {
+    condition     = length(module.defender) == 0
+    error_message = "Defender for Cloud is subscription-wide and must stay opt-in"
+  }
+}
+
+run "defender_opt_in" {
+  command = plan
+
+  variables {
+    environment     = "dev"
+    enable_defender = true
+    alert_email     = "oncall@example.com"
+  }
+
+  assert {
+    condition     = length(module.defender) == 1 && join(",", module.defender[0].plans) == "Arm,Containers,KeyVaults"
+    error_message = "enable_defender turns on the Arm, Containers and KeyVaults plans"
+  }
 }
 
 run "prod_private_frontdoor" {

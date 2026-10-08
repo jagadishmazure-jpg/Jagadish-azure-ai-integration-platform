@@ -13,5 +13,8 @@
 | [`functions.bicep`](functions.bicep) | Flex Consumption Functions app + storage with identity-based roles |
 | [`apim.bicep`](apim.bicep) | APIM (Consumption) APIs for the gateways with JWT validation and rate-limit policies |
 | [`frontdoor.bicep`](frontdoor.bicep) | Optional Front Door Standard |
-| [`network.bicep`](network.bicep) | Optional VNet, private endpoints and DNS zones |
-| [`aks.bicep`](aks.bicep) | Optional AKS profile (free tier, workload identity, KEDA) |
+| [`network.bicep`](network.bicep) | Optional VNet, one NSG on both subnets, private endpoints (Key Vault, Service Bus, Event Grid) and DNS zones |
+| [`aks.bicep`](aks.bicep) | Optional AKS profile (free tier, workload identity, KEDA, Azure CNI overlay + Azure network policy, local accounts off) |
+| [`alerts.bicep`](alerts.bicep) | Action group (optional on-call email), metric alert rules and KQL alert rules on Application Insights |
+| [`diagnostics.bicep`](diagnostics.bicep) | Diagnostic settings: `allLogs` + `AllMetrics` from Key Vault, ACR, Service Bus and Event Grid to Log Analytics |
+| [`defender.bicep`](defender.bicep) | Opt-in Defender for Cloud plans at subscription scope (`enableDefender`, off by default) |

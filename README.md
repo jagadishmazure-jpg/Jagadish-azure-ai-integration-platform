@@ -9,8 +9,8 @@
 - **Reliable writes into systems of record:** repeated requests don't create duplicates (idempotency keys), circuit breakers stop calls to a failing system, and an HTTP 200 that hides a business error is still counted as a failure.
 - **Event-driven agents and human-approved business processes:** SAP events flow through Event Grid and Service Bus to agent workers, and a Durable Functions vendor-invoice process waits for a human approval (48-hour timer) before money moves.
 - **Runtime safety layer with an out-of-band watchdog:** tool code runs in a sandbox with networking off, every agent action is checked against a default-deny policy that records why it was allowed, and a separate monitor reading signed telemetry quarantines an agent within milliseconds (under 2 ms measured locally) of an injection, data leak, runaway loop or unexpected tool (9 of 9 attack scenarios contained, 0 false alarms).
-- **229 automated tests** plus eval, contract and safety gates and an end-to-end demo over real HTTP run in CI.
-- **Terraform + Bicep, GitHub Actions deploy:** the same infrastructure in both tools ([`infra/terraform`](infra/terraform/README.md)), and a pipeline with OIDC login (no secrets), a Bicep/Terraform choice and dev -> prod approval gates. It stays switched off until a subscription exists ([docs/deployment.md](docs/deployment.md)).
+- **230 automated tests** plus eval, contract and safety gates and an end-to-end demo over real HTTP run in CI.
+- **Terraform + Bicep, GitHub Actions deploy:** the same infrastructure in both tools ([`infra/terraform`](infra/terraform/README.md)), including Azure Monitor alert rules and diagnostic settings (on by default) and opt-in Defender for Cloud plans, all validated offline and not deployed, and a pipeline with OIDC login (no secrets), a Bicep/Terraform choice and dev -> prod approval gates. It stays switched off until a subscription exists ([docs/deployment.md](docs/deployment.md)).
 
 **Skills demonstrated:** Azure integration, API gateways (APIM), Microsoft Entra ID / OAuth 2.0 OBO, Event Grid, Service Bus, Durable Functions, Logic Apps, MCP, A2A, Microsoft Agent Framework, FastAPI, Bicep/azd, Terraform, GitHub Actions (OIDC), Python.
 
@@ -131,7 +131,7 @@ What the demo prints (abridged, generated from `python scripts/demo.py --inproc`
 
 ```bash
 ruff check . && ruff format --check .
-pytest -q                                     # 229 offline tests (one skips without the Bicep CLI)
+pytest -q                                     # 230 offline tests (one skips without the Bicep CLI)
 python scripts/run_eval_gate.py --no-write    # eval + contract gate
 python scripts/run_safety_evals.py --no-write # attacks contained, no false quarantines
 python scripts/export_contracts.py --check && python scripts/build_dashboards.py --check

@@ -69,3 +69,4 @@ resource subs 'Microsoft.EventGrid/topics/eventSubscriptions@2025-02-15' = [for 
 
 output endpoint string = topic.properties.endpoint
 output id string = topic.id
+output name string = topic.name

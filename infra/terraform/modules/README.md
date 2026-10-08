@@ -5,9 +5,11 @@ Reusable modules called by the root stack. Each mirrors a module in [`../../modu
 | File | What it does |
 |---|---|
 | [`aks/`](aks/README.md) | Optional AKS profile: Free tier, autoscaling system pool, OIDC issuer + workload identity, Azure RBAC, KEDA, Container Insights, Azure CNI overlay with network policy. |
+| [`alerts/`](alerts/README.md) | Azure Monitor action group, metric alert rules, KQL log alert rules on Application Insights and diagnostic settings to Log Analytics. |
 | [`apim/`](apim/README.md) | API Management in front of the services: optional Entra ID JWT validation, spoofable-header stripping, rate limit, traceparent injection (and, in the agent platform, a kill-switch named value). |
 | [`containerapp/`](containerapp/README.md) | One Container App (HTTP service or KEDA queue worker) on a user-assigned identity, pulling from ACR with that identity. The image is ignored after creation because the pipeline rolls images. |
 | [`containerapps-env/`](containerapps-env/README.md) | Container Apps managed environment on the Consumption workload profile, logging to Log Analytics; optional VNet integration. |
+| [`defender/`](defender/README.md) | Opt-in Defender for Cloud plans (`Standard` tier), called only when `enable_defender = true`. |
 | [`eventgrid/`](eventgrid/README.md) | Event Grid topic (CloudEvents 1.0, keys disabled) with one subscription per event type routed to a Service Bus queue through the topic's managed identity. |
 | [`frontdoor/`](frontdoor/README.md) | Optional Azure Front Door Standard profile, endpoint, origin group, origin (APIM) and HTTPS-only route. |
 | [`functions/`](functions/README.md) | Durable Functions host on Flex Consumption (FC1, Python 3.13) with identity-based storage (shared keys disabled) and the three storage data roles it needs. |

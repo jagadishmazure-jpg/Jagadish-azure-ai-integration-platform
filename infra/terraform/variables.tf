@@ -109,3 +109,28 @@ variable "container_image" {
   type        = string
   default     = "mcr.microsoft.com/k8se/quickstart:latest"
 }
+
+# ---- monitoring, alerting and Defender for Cloud ----
+variable "enable_alerts" {
+  description = "Action group, metric + log alert rules and diagnostic settings to Log Analytics. Cheap; on by default."
+  type        = bool
+  default     = true
+}
+
+variable "alert_email" {
+  description = "Optional on-call email for the action group. Empty = alerts fire in Azure Monitor only."
+  type        = string
+  default     = ""
+}
+
+variable "enable_defender" {
+  description = "Turn on Microsoft Defender for Cloud plans. SUBSCRIPTION-WIDE and billed per resource, so off by default."
+  type        = bool
+  default     = false
+}
+
+variable "defender_plans" {
+  description = "Defender for Cloud plans enabled when enable_defender = true."
+  type        = set(string)
+  default     = ["Arm", "Containers", "KeyVaults"]
+}

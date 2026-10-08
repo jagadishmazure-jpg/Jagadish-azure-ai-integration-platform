@@ -61,6 +61,11 @@ each pack at a vendor **sandbox** with `AIIP_SAAS_<VENDOR>_URL` before any produ
 | `AIIP_DEPLOY_FRONT_DOOR` | `false` | Front Door Standard in front of APIM |
 | `AIIP_PRIVATE_NETWORKING` | `false` | VNet, internal Container Apps environment, private endpoints for Key Vault, Service Bus and Event Grid (public access off on all three), one NSG on both subnets |
 | `AIIP_COMPUTE_PROFILE` | `containerapps` | `aks` provisions an AKS cluster (workload identity, KEDA) instead; workloads are then applied with the same image |
+| `AIIP_ENABLE_ALERTS` | `true` | Action group, 4 metric alert rules (Service Bus dead letters, Event Grid dropped events and publish failures, Key Vault availability), 4 KQL rules on App Insights (failed requests, exceptions, integration failures including HTTP 200 business rejects, authorization denials) and diagnostic settings from Key Vault, ACR, Service Bus and Event Grid to Log Analytics |
+| `AIIP_ALERT_EMAIL` | empty | On-call email for the action group; empty = alerts only show in Azure Monitor |
+| `AIIP_ENABLE_DEFENDER` | `false` | Defender for Cloud plans `Arm`, `Containers` and `KeyVaults` at `Standard` tier. Subscription-wide and billed per resource: turn on only in a subscription you own, after checking [Defender for Cloud pricing](https://azure.microsoft.com/pricing/details/defender-for-cloud/) |
+
+The alert rules, diagnostic settings and Defender plans are written in Bicep and Terraform and validated offline (`bicep build`, `terraform test`, checkov); they have never been deployed, and the thresholds are untuned starting points.
 
 ## CI/CD with GitHub Actions and OIDC (disabled by default)
 

@@ -49,6 +49,26 @@ jobs:
           cat bicep.log
           if grep -q "Warning" bicep.log; then exit 1; fi
 
+  k8s:
+    # AKS manifests (k8s/) are generated from infra/main.bicep and validated offline against the
+    # Kubernetes JSON schemas; nothing is applied to a cluster.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with: { python-version: "3.13" }
+      - run: pip install pyyaml==6.0.3
+      - name: Manifests are current (render_k8s.py --check)
+        run: python scripts/render_k8s.py --check
+      - name: Install kubeconform (pinned, checksum verified)
+        run: |
+          curl -sSLo kubeconform.tgz https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz
+          echo "9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883  kubeconform.tgz" | sha256sum -c -
+          tar xzf kubeconform.tgz kubeconform
+      - name: kubeconform (strict schema validation, Kubernetes 1.33)
+        run: ./kubeconform -strict -summary -kubernetes-version 1.33.0 -ignore-filename-pattern kustomization.yaml k8s/
+
   sbom:
     # Software bill of materials for the source tree (lockfiles and manifests), kept as a build
     # artifact on every run. Image SBOMs, where the repo ships a container, come from the image job.

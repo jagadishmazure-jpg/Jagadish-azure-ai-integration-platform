@@ -8,6 +8,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -213,3 +214,64 @@ def test_alerts_diagnostics_and_defender_match_in_both_tools():
     variables = (INFRA / "terraform" / "variables.tf").read_text()
     assert re.search(r'variable "enable_defender" \{[^}]*default\s+= false', variables)
     assert re.search(r'variable "enable_alerts" \{[^}]*default\s+= true', variables)
+
+
+def _k8s_docs() -> list[dict]:
+    import yaml
+
+    docs = []
+    for f in sorted((ROOT / "k8s").rglob("*.yaml")):
+        if f.name != "kustomization.yaml":
+            docs += [d for d in yaml.safe_load_all(f.read_text()) if d]
+    return docs
+
+
+def test_k8s_manifests_are_current_and_match_the_bicep_workloads():
+    r = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "render_k8s.py"), "--check"],
+        capture_output=True,
+        text=True,
+    )
+    assert r.returncode == 0, r.stdout + r.stderr
+    deployments = {d["metadata"]["name"] for d in _k8s_docs() if d["kind"] == "Deployment"}
+    bicep = set(re.findall(r"^\s+\{ name: '([\w-]+)', reg:", _main(), re.M))
+    assert deployments == bicep and len(bicep) == 15
+    ci = (ROOT / ".github" / "workflows" / "ci.yml").read_text()
+    assert "kubeconform -strict" in ci and "sha256sum -c" in ci and "render_k8s.py --check" in ci
+
+
+def test_k8s_workloads_are_hardened_and_network_policy_is_default_deny():
+    docs = _k8s_docs()
+    by_kind: dict[str, list[dict]] = {}
+    for d in docs:
+        by_kind.setdefault(d["kind"], []).append(d)
+    ns = by_kind["Namespace"][0]["metadata"]["labels"]
+    assert ns["pod-security.kubernetes.io/enforce"] == "restricted"
+    pdbs = {
+        p["spec"]["selector"]["matchLabels"]["app.kubernetes.io/name"] for p in by_kind["PodDisruptionBudget"]
+    }
+    services = {s["metadata"]["name"] for s in by_kind["Service"]}
+    for dep in by_kind["Deployment"]:
+        name, pod = dep["metadata"]["name"], dep["spec"]["template"]["spec"]
+        assert pod["securityContext"]["runAsNonRoot"] and pod["securityContext"]["runAsUser"] == 10001
+        assert pod["securityContext"]["seccompProfile"]["type"] == "RuntimeDefault"
+        assert pod["automountServiceAccountToken"] is False
+        (c,) = pod["containers"]
+        sc = c["securityContext"]
+        assert sc["allowPrivilegeEscalation"] is False and sc["readOnlyRootFilesystem"] is True
+        assert sc["capabilities"]["drop"] == ["ALL"]
+        assert set(c["resources"]["limits"]) == set(c["resources"]["requests"]) == {"cpu", "memory"}
+        assert name in pdbs, name
+        assert (name in services) == (not name.startswith("worker-")), name
+    policies = {p["metadata"]["name"]: p["spec"] for p in by_kind["NetworkPolicy"]}
+    deny = policies["default-deny-all"]
+    assert deny["podSelector"] == {} and deny["policyTypes"] == ["Ingress", "Egress"]
+    assert "ingress" not in deny and "egress" not in deny
+    # only the edge gateways (external in Container Apps) accept traffic from the ingress controller
+    edge = {
+        d["metadata"]["name"]
+        for d in by_kind["Deployment"]
+        if d["spec"]["template"]["metadata"]["labels"].get("aiip.example/edge") == "true"
+    }
+    assert edge == set(re.findall(r"\{ name: '([\w-]+)', reg: '[\w-]+', external: true", _main()))
+    assert policies["allow-azure-egress"]["egress"][0]["to"][0]["ipBlock"]["except"] == ["169.254.169.254/32"]

@@ -1,6 +1,6 @@
 # Infrastructure (`infra/`, `azure.yaml`, workflows)
 
-Bicep for `azd` and a Terraform twin with cost-minimized defaults and opt-in Front Door, Private Link and AKS. Validated in CI; not deployed. Azure Monitor alert rules and diagnostic settings are on by default and Defender for Cloud plans are opt-in, in both tools. The Bicep and Terraform match on the security settings that matter: an NSG on both private-networking subnets, Event Grid, Key Vault and Service Bus public access off under private networking, and an AKS profile with Azure CNI overlay plus Azure network policy, local accounts off, Entra ID with Azure RBAC, Azure Policy and Key Vault CSI rotation (`test_bicep_matches_terraform_for_nsgs_and_aks_network_policy`).
+Bicep for `azd` and a Terraform twin with cost-minimized defaults and opt-in Front Door, Private Link and AKS. Validated in CI; not deployed. Azure Monitor alert rules and diagnostic settings are on by default and Defender for Cloud plans are opt-in, in both tools. The Bicep and Terraform match on the security settings that matter: an NSG on both private-networking subnets, Event Grid, Key Vault and Service Bus public access off under private networking, and an AKS profile with Azure CNI overlay plus Azure network policy, local accounts off, Entra ID with Azure RBAC, Azure Policy and Key Vault CSI rotation (`test_bicep_matches_terraform_for_nsgs_and_aks_network_policy`). Kubernetes manifests for the AKS profile ([`k8s/`](../../k8s/README.md)), generated from the Bicep workload list: 15 Deployments running as non-root with a read-only root filesystem, dropped capabilities, seccomp and CPU/memory limits, Services, PodDisruptionBudgets, a `restricted` Pod Security namespace and default-deny NetworkPolicies with explicit allow rules. CI validates them offline with kubeconform; never applied to a cluster.
 
 **Sections:** [1. Purpose](#1-purpose) · [2. Architecture](#2-architecture) · [3. How it works](#3-how-it-works) · [4. Key files](#4-key-files) · [5. Code excerpts](#5-code-excerpts) · [6. Configuration](#6-configuration) · [7. Commands](#7-commands) · [8. Real output](#8-real-output) · [9. Tests and eval gates](#9-tests-and-eval-gates) · [10. Guardrails](#10-guardrails) · [11. Security and governance](#11-security-and-governance) · [12. Observability](#12-observability) · [13. Failure modes](#13-failure-modes) · [14. Mapping to Azure services](#14-mapping-to-azure-services) · [15. Limitations](#15-limitations) · [16. Interview talking points](#16-interview-talking-points) · [17. Adopt this](#17-adopt-this)
 
@@ -130,6 +130,8 @@ tests/test_36_reference_architecture.py::test_cost_estimate_has_no_invented_pric
 tests/test_36_reference_architecture.py::test_dockerfile_uses_non_root_user
 tests/test_36_reference_architecture.py::test_workflows_are_hardened
 tests/test_36_reference_architecture.py::test_alerts_diagnostics_and_defender_match_in_both_tools
+tests/test_36_reference_architecture.py::test_k8s_manifests_are_current_and_match_the_bicep_workloads
+tests/test_36_reference_architecture.py::test_k8s_workloads_are_hardened_and_network_policy_is_default_deny
 ```
 <!-- /output -->
 
@@ -167,6 +169,7 @@ Container Apps, API Management, Service Bus, Event Grid, Functions, Key Vault, C
 
 - Never deployed. The alert rules, diagnostic settings and Defender plans have only been built and plan-tested offline; metric names follow the Azure Monitor reference but have not fired against real resources.
 - No diagnostic settings for APIM or the Function app yet.
+- The AKS manifests use a placeholder image and placeholder Workload ID client ids; the IaC does not create the federated identity credentials, the application routing add-on or an Ingress, and the workers have no KEDA `ScaledObject` on AKS. NetworkPolicy cannot filter egress by FQDN.
 
 ## 16. Interview talking points
 

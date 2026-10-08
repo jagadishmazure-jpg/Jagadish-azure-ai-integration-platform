@@ -8,7 +8,7 @@ This repository deploys with **GitHub Actions** (not Azure DevOps). Infrastructu
 
 | Workflow | Trigger | What it does |
 |---|---|---|
-| [`ci.yml`](../.github/workflows/ci.yml) | push to `main`, pull requests | The application checks (lint, tests, eval gates, Bicep build). A `secrets` job runs gitleaks over the full git history. |
+| [`ci.yml`](../.github/workflows/ci.yml) | push to `main`, pull requests | The application checks (lint, tests, eval gates, Bicep build). A `k8s` job checks the AKS manifests are current and validates them with kubeconform. A `secrets` job runs gitleaks over the full git history. |
 | [`codeql.yml`](../.github/workflows/codeql.yml) | push to `main`, pull requests, weekly | CodeQL analysis of the Python code and of the workflow files; findings go to the Security tab. |
 | [`infra.yml`](../.github/workflows/infra.yml) | push to `main`, pull requests, manual | `terraform fmt -check`, `init -backend=false`, `validate`, `terraform test` (mocked providers), tflint, checkov, container build + local smoke, a Trivy image scan (fixable HIGH/CRITICAL fail), an image SBOM and, on `main`, keyless build provenance for the image archive. `terraform plan` runs only if the Azure OIDC variables exist; otherwise the job logs a notice and passes, and validation is still enforced. |
 | [`deploy.yml`](../.github/workflows/deploy.yml) | push to `main`, manual (`deploy_tool`: `terraform` or `bicep`) | Build the image(s), provision `dev`, push, roll, smoke test; then, after approval, provision `prod`, promote the same image, roll, smoke test. Gated by `DEPLOY_ENABLED == 'true'`. |
@@ -44,6 +44,8 @@ flowchart LR
 **Image.** One platform image (root [`Dockerfile`](../Dockerfile)) is built per commit, smoke-tested locally, pushed to the dev ACR and promoted to prod with `az acr import`. Every Container App (gateways, MCP servers, agents, workers) is rolled to it; the Durable Functions app is packaged with `scripts/package_functions.sh` and zip-deployed.
 
 **Smoke tests.** After each roll the pipeline polls the tool gateway's `/healthz` on its public URL until it answers (5 minutes max). With private networking on (prod), run the smoke step from a runner inside the VNet or through APIM.
+
+**AKS profile (not wired into the pipeline).** With `computeProfile = 'aks'` the IaC creates the cluster only; the pipeline still rolls Container Apps. The workloads for AKS are in [`k8s/`](../k8s/README.md), generated from `infra/main.bicep` and validated offline with kubeconform in CI. Before `kubectl apply -k k8s` could work you would set the image digest and each ServiceAccount's managed identity client id, create the federated identity credentials, fill the `aiip-azure` ConfigMap from the IaC outputs and enable an ingress controller. None of this has been applied to a cluster.
 
 ## One-time setup (when a subscription exists)
 

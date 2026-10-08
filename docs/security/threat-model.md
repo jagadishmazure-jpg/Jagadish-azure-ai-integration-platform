@@ -54,6 +54,7 @@ money-moving step in the invoice process.
 | Elevation of privilege | An agent calls a tool outside its card or writes through a read-only MCP server | Card-filtered catalog and allow-list; read-only servers refuse writes even with a role | `test_allow_list_denies_tools_outside_the_card`, `test_read_only_server_refuses_writes_even_with_role` | Built |
 | Elevation of privilege | Tool code escapes the sandbox | Separate process, network denied, scoped files, no process creation or native code, CPU/memory limits, environment allow-list | `test_sandbox_network_is_denied_by_default`, `test_sandbox_denies_process_creation_and_native_code`, `test_sandbox_environment_is_an_allow_list` | Built (local sandbox); Container Apps dynamic sessions adapter written, not deployed |
 | Elevation of privilege | An action no rule covers | Default-deny policy supervisor with a proof per decision | `test_unknown_or_uncovered_actions_are_denied_by_default`, `test_decisions_carry_a_proof_with_rule_inputs_and_hash` | Built |
+| Elevation of privilege | A compromised pod on the AKS profile escalates on the node or moves laterally to other workloads | `restricted` Pod Security namespace; non-root, read-only root filesystem, no privilege escalation, capabilities dropped, seccomp; no API token mounted; default-deny NetworkPolicy with allow rules | `test_k8s_workloads_are_hardened_and_network_policy_is_default_deny`, kubeconform in CI | Written, not deployed (manifests never applied) |
 
 ## OWASP Top 10 for LLM Applications 2025
 

@@ -12,7 +12,8 @@ What every gateway shares.
 | [`approvals.py`](approvals.py) | HITL approvals bound to tool, business key and exact arguments |
 | [`errors.py`](errors.py) | Sanitized error model returned to agents |
 | [`schema.py`](schema.py) | JSON-schema validation helpers |
-| [`untrusted.py`](untrusted.py) | Screening of external text for instruction-like content |
+| [`untrusted.py`](untrusted.py) | Screening of external text for instruction-like content: regex always (the only screen offline), then Prompt Shields when switched on |
+| [`content_safety.py`](content_safety.py) | Opt-in Azure AI Content Safety Prompt Shields client (`AIIP_PROMPT_SHIELDS=1` plus `AZURE_CONTENT_SAFETY_ENDPOINT`): Entra token, five documents per request, fail closed |
 | [`tracecontext.py`](tracecontext.py) | W3C traceparent helpers |
 | [`http.py`](http.py) | httpx client: real HTTP or in-process ASGI |
 | [`__init__.py`](__init__.py) | Package marker |

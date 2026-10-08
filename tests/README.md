@@ -7,7 +7,7 @@ Offline, fast (~10 s). Files are numbered by the integration topic they cover; e
 | [`conftest.py`](conftest.py) | In-process topology: every service mounted as ASGI, tokens from the local issuer, fault injection, state reset |
 | [`test_27_integration_plane.py`](test_27_integration_plane.py) | Five separate gateways, shared auth, KV references only, no direct system access from agents, full demo |
 | [`test_28_tool_gateway.py`](test_28_tool_gateway.py) | Allow-lists, side-effect classes, rate limit, cache, breaker, schemas, idempotency, timeouts, sanitized errors, audit |
-| [`test_29_mcp_gateway.py`](test_29_mcp_gateway.py) | Catalog, discovery, read-only default, HITL writes, SQL guardrails, injection screening, server auth |
+| [`test_29_mcp_gateway.py`](test_29_mcp_gateway.py) | Catalog, discovery, read-only default, HITL writes, SQL guardrails, injection screening (regex, plus the opt-in Prompt Shields path with a fake transport), server auth |
 | [`test_30_a2a_gateway.py`](test_30_a2a_gateway.py) | Cards, caller allow-list, hop cap, trace/tenant propagation, versioning, schema |
 | [`test_31_events.py`](test_31_events.py) | Admission, dedupe, budget, poison and dead-letter, completion events, agent identity |
 | [`test_32_bpm.py`](test_32_bpm.py) | Orchestration paths, HITL, timeout, compensation, forged approvals, Durable SDK replay, Functions indexing |

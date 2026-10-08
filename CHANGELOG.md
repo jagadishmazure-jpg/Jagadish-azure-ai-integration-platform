@@ -6,6 +6,7 @@ Notable changes, newest first. The format follows [Keep a Changelog](https://kee
 
 ### Added
 
+- Opt-in Azure AI Content Safety Prompt Shields after the regex screen in `shared/untrusted.py` (`src/aiip/shared/content_safety.py`, ported from azure-agent-platform): with `AIIP_PROMPT_SHIELDS=1` and `AZURE_CONTENT_SAFETY_ENDPOINT`, MCP output, A2A artifacts and supervisor-retrieved text are also screened, keyless and fail closed. Offline the regex screen remains the only screen. 5 tests with a fake transport; not run against Azure.
 - Threat model (`docs/security/threat-model.md`): STRIDE, OWASP Top 10 for LLM Applications and MITRE ATLAS mapped to this repository's components, each row with its control, test evidence and built / planned status.
 - SBOM job in CI: an SPDX JSON software bill of materials of the source tree on every run (artifact `sbom.spdx.json`).
 - Container supply chain: base images pinned by digest, pip/uv removed from runtime images, a Trivy image scan that fails on fixable HIGH/CRITICAL findings, an image SBOM, and keyless build provenance for the image archive on `main` (`actions/attest-build-provenance`; verification steps in `SECURITY.md`).

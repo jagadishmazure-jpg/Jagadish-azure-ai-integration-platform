@@ -32,7 +32,7 @@ flowchart LR
 3. `_authorize` checks the agent and tool; write tools go through the same approval store as the Tool Gateway.
 4. The gateway calls the server over streamable HTTP with a token for `api://aiip-mcp-servers` holding `McpServer.Invoke`, which only the gateway has.
 5. `sql_warehouse.guard` allows one SELECT statement over allow-listed tables; PII tables are not exposed.
-6. Returned text is screened by `shared/untrusted.screen`; flagged fields are withheld.
+6. Returned text is screened by `shared/untrusted.screen`; flagged fields are withheld. The regex screen always runs and is the only screen offline. With `AIIP_PROMPT_SHIELDS=1` and `AZURE_CONTENT_SAFETY_ENDPOINT` set, the strings it let through also go to Azure AI Content Safety Prompt Shields (`shared/content_safety.py`) and flagged ones are withheld with the pattern `prompt_shields`.
 
 ## 4. Key files
 
@@ -43,6 +43,8 @@ flowchart LR
 | `src/aiip/mcp_servers/sap_orders.py` | read-only SAP orders |
 | `src/aiip/mcp_servers/servicenow_incidents.py` | incidents with HITL create |
 | `src/aiip/mcp_servers/sql_warehouse.py` | SELECT-only SQL |
+| `src/aiip/shared/untrusted.py` | regex screen, then optional Prompt Shields |
+| `src/aiip/shared/content_safety.py` | opt-in Prompt Shields client: keyless, batched, fail closed |
 | `control-plane/mcp-catalog.json` | generated catalog |
 
 ## 5. Code excerpts
@@ -70,33 +72,28 @@ def guard(sql: str) -> str | None:
 <!-- code: src/aiip/shared/untrusted.py::screen -->
 ```python
 def screen(value: Any, path: str = "") -> tuple[Any, list[dict[str, str]]]:
-    flags: list[dict[str, str]] = []
-    if isinstance(value, dict):
-        out = {}
-        for k, v in value.items():
-            out[k], f = screen(v, f"{path}/{k}")
-            flags += f
-        return out, flags
-    if isinstance(value, list):
-        out_l = []
-        for i, v in enumerate(value):
-            nv, f = screen(v, f"{path}/{i}")
-            out_l.append(nv)
-            flags += f
-        return out_l, flags
-    if isinstance(value, str):
-        hits = [name for name, rx in PATTERNS.items() if rx.search(value)]
-        if hits:
-            return WITHHELD, [{"path": path or "/", "patterns": ",".join(hits)}]
-        if len(value) > MAX_STRING:
-            return value[:MAX_STRING] + "...[truncated]", [{"path": path or "/", "patterns": "oversize"}]
-    return value, flags
+    """Regex screen, then Prompt Shields when it is switched on. Returns (clean value, flags)."""
+    clean, flags = _regex_screen(value, path)
+    leaves: list[tuple[str, str]] = []
+    _string_leaves(clean, path, leaves)
+    todo = [(p, s) for p, s in leaves if s.strip() and s != WITHHELD]
+    attacked = content_safety.shield([s for _, s in todo])
+    if not attacked:
+        return clean, flags
+    hit = {p for (p, _), bad in zip(todo, attacked, strict=True) if bad}
+    flags += [{"path": p or "/", "patterns": "prompt_shields"} for p, _ in todo if p in hit]
+    return _withhold(clean, path, hit), flags
 ```
 <!-- /code -->
 
 ## 6. Configuration
 
 Server URLs come from `AIIP_<SERVICE>_URL` in HTTP mode; in-process mode mounts them directly. `CALL_TIMEOUT_S` in `mcp/gateway.py` bounds each call.
+
+| Setting | Default | Effect |
+|---|---|---|
+| `AIIP_PROMPT_SHIELDS` | unset (off) | `1` adds Azure AI Content Safety Prompt Shields after the regex screen, for MCP output, A2A artifacts and supervisor-retrieved text |
+| `AZURE_CONTENT_SAFETY_ENDPOINT` | unset | Content Safety resource endpoint; both settings are needed. Auth is `DefaultAzureCredential` (role `Cognitive Services User`); no key is read |
 
 ## 7. Commands
 
@@ -134,6 +131,11 @@ tests/test_29_mcp_gateway.py::test_screen_catches_common_injection_shapes[payloa
 tests/test_29_mcp_gateway.py::test_screen_catches_common_injection_shapes[payload1]
 tests/test_29_mcp_gateway.py::test_screen_catches_common_injection_shapes[payload2]
 tests/test_29_mcp_gateway.py::test_screen_leaves_ordinary_business_text_alone
+tests/test_29_mcp_gateway.py::test_prompt_shields_is_off_by_default_and_needs_flag_and_endpoint
+tests/test_29_mcp_gateway.py::test_prompt_shields_request_is_keyless_and_batched
+tests/test_29_mcp_gateway.py::test_screen_runs_prompt_shields_after_the_regex_screen
+tests/test_29_mcp_gateway.py::test_prompt_shields_outage_fails_closed
+tests/test_29_mcp_gateway.py::test_mcp_gateway_withholds_what_prompt_shields_flags
 tests/test_29_mcp_gateway.py::test_sql_server_is_read_only_and_allow_listed[DELETE FROM delivery_kpis-only SELECT]
 tests/test_29_mcp_gateway.py::test_sql_server_is_read_only_and_allow_listed[SELECT * FROM delivery_kpis; DROP TABLE delivery_kpis-one statement]
 tests/test_29_mcp_gateway.py::test_sql_server_is_read_only_and_allow_listed[SELECT * FROM customer_pii-not exposed]
@@ -147,6 +149,7 @@ tests/test_29_mcp_gateway.py::test_mcp_servers_reject_callers_other_than_the_gat
 - Read-only by default; writes need approval and an idempotency key.
 - SQL is restricted to one SELECT over exposed tables.
 - Injected instructions in server output are withheld, with the path and pattern recorded.
+- **Which screen runs offline:** only the regex screen. Prompt Shields runs only when switched on, never sees text the regex screen already withheld, and fails closed: if the service errors, every string in that batch is withheld.
 
 ## 11. Security and governance
 
@@ -164,6 +167,7 @@ Spans per call with server, tool and result class; demo step 10 shows MCP succes
 | table not exposed | 400 `validation_error` |
 | write without approval | 428 `approval_required` |
 | injected text | field withheld |
+| Prompt Shields unreachable (flag on) | strings in the failed batch withheld and flagged `prompt_shields` |
 | server down | 503 with breaker |
 
 ## 14. Mapping to Azure services
@@ -173,11 +177,13 @@ Spans per call with server, tool and result class; demo step 10 shows MCP succes
 | servers and gateway | Azure Container Apps |
 | server identity | Entra app role `McpServer.Invoke` |
 | warehouse | Azure Databricks SQL (stand-in here) |
+| injection screen | Azure AI Content Safety Prompt Shields (opt-in adapter, unit-tested with a fake transport, not run against Azure) |
 
 ## 15. Limitations
 
 - Three servers, all on sandbox stand-ins.
 - SQL guard is regex-based; a real deployment should also use a read-only warehouse role.
+- The injection regexes miss novel phrasings; the Prompt Shields adapter has not been run against a real Content Safety resource.
 
 ## 16. Interview talking points
 

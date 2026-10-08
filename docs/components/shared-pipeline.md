@@ -41,7 +41,8 @@ flowchart LR
 | `src/aiip/shared/resilience.py` | bucket, cache, breaker |
 | `src/aiip/shared/approvals.py` | approvals |
 | `src/aiip/shared/errors.py` | error model |
-| `src/aiip/shared/untrusted.py` | screening |
+| `src/aiip/shared/untrusted.py` | screening (regex always; Prompt Shields when `AIIP_PROMPT_SHIELDS=1`) |
+| `src/aiip/shared/content_safety.py` | opt-in Azure AI Content Safety Prompt Shields client, keyless and fail closed |
 
 ## 5. Code excerpts
 

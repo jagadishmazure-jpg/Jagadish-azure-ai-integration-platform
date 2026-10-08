@@ -59,7 +59,7 @@ money-moving step in the invoice process.
 
 | Risk | How it applies here | Control | Status |
 |---|---|---|---|
-| LLM01 Prompt injection | Indirect: instructions in MCP server output, retrieved documents and SaaS free-text fields | MCP output screened as untrusted and withheld (`test_prompt_injection_in_server_output_is_withheld_and_flagged`); supervisor screens retrieved content; the monitor quarantines the session (`test_injection_in_retrieved_doc_quarantines_the_session_and_gateways_refuse_it`) | Built (regex). Azure AI Content Safety Prompt Shields: see the Content Safety section of [`SECURITY.md`](../../SECURITY.md) |
+| LLM01 Prompt injection | Indirect: instructions in MCP server output, retrieved documents and SaaS free-text fields | MCP output screened as untrusted and withheld (`test_prompt_injection_in_server_output_is_withheld_and_flagged`); supervisor screens retrieved content; the monitor quarantines the session (`test_injection_in_retrieved_doc_quarantines_the_session_and_gateways_refuse_it`) | Built (regex, the only path offline). Prompt Shields adapter (`src/aiip/shared/content_safety.py`, flag `AIIP_PROMPT_SHIELDS=1`) written and tested with a fake transport (`test_screen_runs_prompt_shields_after_the_regex_screen`), not run against Azure |
 | LLM02 Sensitive information disclosure | HR and customer data flowing to the model | Canonical models forbid unmapped fields (`test_canonical_models_forbid_unmapped_fields`); payloads kept out of the audit (`test_supervisor_screens_retrieved_content_and_keeps_payloads_out_of_the_audit`) | Built |
 | LLM03 Supply chain | Compromised package, action or base image | Pinned dependencies, SHA-pinned actions, Dependabot, CodeQL, gitleaks, SBOM, digest-pinned base image, Trivy gate, build provenance | Built |
 | LLM04 Data and model poisoning | Poisoned events or catalog entries steer agents | Event admission validates schema and tenant (`test_admission_validates_schema_and_tenant`); unknown event types dead-letter; MCP catalog lists only reviewed servers as writers | Built |
@@ -84,8 +84,8 @@ money-moving step in the invoice process.
 
 ## Residual risks
 
-* Regex screens miss novel phrasings; the Content Safety path helps only once configured against a
-  real Azure resource.
+* Regex screens miss novel phrasings; the Prompt Shields path helps only once switched on against a
+  real Azure resource, which has not been done.
 * The local sandbox relies on in-process guards and a subprocess; the stronger isolation (Container
   Apps dynamic sessions) is written but not deployed.
 * The SaaS systems are stand-ins; real vendor behaviour (rate limits, ACL edge cases) is untested.

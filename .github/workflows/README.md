@@ -12,3 +12,5 @@ is `true`. It is not set and nothing has been deployed. Walkthrough: [`docs/depl
 | [`teardown.yml`](teardown.yml) | Manual only: destroys one environment with the tool that created it, after typing the environment name again. Same gate; prod needs approval. |
 
 **Supply chain.** Every third-party action is pinned to a full commit SHA with the version in a comment, and every workflow starts from `permissions: contents: read`; jobs that need more (OIDC sign-in, CodeQL uploads) ask for it themselves. Dependabot ([`../dependabot.yml`](../dependabot.yml)) proposes weekly grouped updates that move the SHA and the comment together, and `tests/test_36_reference_architecture.py::test_workflows_are_hardened` fails CI if an action is left unpinned.
+
+**SBOM.** The `sbom` job in `ci.yml` writes an SPDX JSON bill of materials for the source tree on every run (artifact `sbom.spdx.json`). The image job in `infra.yml` adds a Trivy scan that fails on fixable HIGH/CRITICAL findings, an SPDX image SBOM and, on `main`, keyless build provenance for the image archive (`actions/attest-build-provenance`); see [`SECURITY.md`](../../SECURITY.md) for how to verify it.

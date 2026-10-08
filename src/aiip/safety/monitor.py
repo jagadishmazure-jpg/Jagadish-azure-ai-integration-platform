@@ -231,7 +231,7 @@ class OutOfBandMonitor:
         log = rec.get("log", "")
         event = rec.get("event") or ("gateway" if rec.get("gateway") else None)
         if event is None or rec.get("result_class") == "quarantined":
-            return
+            return None
         action = rec.get("action") or GATEWAY_ACTION.get(rec.get("gateway", ""), "")
         target = rec.get("target") or rec.get("operation") or ""
         actor = rec.get("actor") or ""

@@ -2,13 +2,12 @@
 the value is resolved at call time and never logged, cached in files or returned to an agent.
 
 * azure: `azure.keyvault.secrets.SecretClient` with the workload's managed identity.
-* local: a stand-in vault whose values are derived (HMAC) from AIIP_LOCAL_VAULT_SEED, which the
+* local: a stand-in vault whose values are derived (scrypt KDF) from AIIP_LOCAL_VAULT_SEED, which the
   demo generates fresh on every run. There is no secret material in the repository."""
 
 from __future__ import annotations
 
 import hashlib
-import hmac
 import os
 import re
 import secrets as _secrets
@@ -63,7 +62,9 @@ class SecretResolver:
 
     def _local_value(self, ref: SecretRef) -> str:
         seed = os.environ.setdefault("AIIP_LOCAL_VAULT_SEED", _secrets.token_hex(32))
-        return hmac.new(seed.encode(), str(ref).encode(), hashlib.sha256).hexdigest()
+        # Deterministic stand-in value per reference, derived with scrypt (a memory-hard KDF) from a
+        # per-process seed. Nothing here is stored or compared as a password; the cost is kept low.
+        return hashlib.scrypt(str(ref).encode(), salt=seed.encode(), n=2**10, r=8, p=1, dklen=32).hex()
 
     def _azure_value(self, ref: SecretRef) -> str:  # pragma: no cover - needs Azure
         from azure.identity import DefaultAzureCredential

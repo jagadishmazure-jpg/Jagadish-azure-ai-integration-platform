@@ -41,10 +41,17 @@ class Message:
 
 
 class BusClient(Protocol):
-    async def receive(self, queue: str, max_messages: int = 1) -> list[Message]: ...
-    async def complete(self, queue: str, msg: Message) -> None: ...
-    async def abandon(self, queue: str, msg: Message) -> None: ...
-    async def dead_letter(self, queue: str, msg: Message, reason: str, description: str) -> None: ...
+    async def receive(self, queue: str, max_messages: int = 1) -> list[Message]:
+        """Lock and return up to ``max_messages`` messages."""
+
+    async def complete(self, queue: str, msg: Message) -> None:
+        """Settle ``msg`` as done."""
+
+    async def abandon(self, queue: str, msg: Message) -> None:
+        """Release the lock so ``msg`` is delivered again."""
+
+    async def dead_letter(self, queue: str, msg: Message, reason: str, description: str) -> None:
+        """Move ``msg`` to the dead-letter queue with a reason."""
 
 
 class InMemoryBus:

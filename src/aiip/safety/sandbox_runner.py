@@ -122,7 +122,7 @@ def main() -> None:
         result["result"] = scope.get("RESULT")
     except MemoryError:
         result.update(ok=False, error="memory_limit")
-    except BaseException as exc:
+    except (Exception, SystemExit) as exc:  # tool code may call sys.exit(); report it, never exit
         result.update(ok=False, error=f"{type(exc).__name__}: {exc}"[:300])
         result["trace"] = traceback.format_exc(limit=2)[-600:]
     result["violations"] = violations

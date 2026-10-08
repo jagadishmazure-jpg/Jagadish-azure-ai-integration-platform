@@ -204,7 +204,7 @@ async def test_service_bus_adapter_uses_peek_lock_settlement(monkeypatch):
             return receiver
 
     monkeypatch.setattr(sbaio, "ServiceBusClient", FakeClient)
-    monkeypatch.setattr(idaio, "DefaultAzureCredential", lambda: object())
+    monkeypatch.setattr(idaio, "DefaultAzureCredential", object)
     monkeypatch.setenv("AIIP_SERVICEBUS_NAMESPACE", "aiip-sb.servicebus.windows.net")
     bus = ServiceBusClientBus()
     msgs = await bus.receive("order-events")
@@ -231,7 +231,7 @@ async def test_event_grid_adapter_publishes_cloudevents_with_extensions(monkeypa
             sent.extend(events)
 
     monkeypatch.setattr(egaio, "EventGridPublisherClient", FakeEG)
-    monkeypatch.setattr(idaio, "DefaultAzureCredential", lambda: object())
+    monkeypatch.setattr(idaio, "DefaultAzureCredential", object)
     monkeypatch.setenv(
         "AIIP_EVENTGRID_TOPIC_ENDPOINT", "https://aiip.eastus-1.eventgrid.azure.net/api/events"
     )

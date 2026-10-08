@@ -96,8 +96,11 @@ class Topology:
         self.log_dir.mkdir(exist_ok=True)
         for s in SERVICES:
             env = {**self.env, "PORT": str(s.port), "HOST": "127.0.0.1"}
-            log = open(self.log_dir / f"{s.name}.log", "w")
-            self.procs.append((s, subprocess.Popen(s.argv, env=env, stdout=log, stderr=subprocess.STDOUT)))
+            # The child keeps its own copy of the file descriptor, so the parent can close it at once.
+            with open(self.log_dir / f"{s.name}.log", "w") as log:
+                self.procs.append(
+                    (s, subprocess.Popen(s.argv, env=env, stdout=log, stderr=subprocess.STDOUT))
+                )
         deadline = time.monotonic() + 60
         pending = list(SERVICES)
         while pending and time.monotonic() < deadline:

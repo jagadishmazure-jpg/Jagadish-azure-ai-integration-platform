@@ -20,9 +20,11 @@ from aiip.shared.auth import validate_token
 
 
 class TokenBroker(Protocol):
-    async def obo(self, caller: AppRegistration, user_assertion: str, target: str) -> str: ...
+    async def obo(self, caller: AppRegistration, user_assertion: str, target: str) -> str:
+        """Exchange the user's assertion for a token to ``target`` (on-behalf-of)."""
 
-    async def agent(self, caller: AppRegistration, target: str, tenant_id: str) -> str: ...
+    async def agent(self, caller: AppRegistration, target: str, tenant_id: str) -> str:
+        """Return an app-only token for ``target`` in ``tenant_id``."""
 
 
 class LocalBroker:

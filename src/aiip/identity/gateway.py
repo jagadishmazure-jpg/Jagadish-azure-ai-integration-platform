@@ -93,7 +93,7 @@ async def _obo(caller, assertion: str, target: str) -> tuple[str, str]:
         claims = __import__("jwt").decode(assertion, options={"verify_signature": False})
         subject, tenant = claims.get("upn") or claims.get("oid", "unknown"), claims.get("tid", "")
     except Exception:
-        pass
+        pass  # malformed assertion: keep "unknown" for the span; the broker rejects it next
     with integration_span(
         "identity.obo",
         service="identity-gateway",

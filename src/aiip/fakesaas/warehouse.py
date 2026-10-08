@@ -36,10 +36,14 @@ async def execute(body: Statement, authorization: str | None = Header(default=No
         cols = [
             {"name": d[0], "type_name": "STRING", "position": i} for i, d in enumerate(cur.description or [])
         ]
-    except sqlite3.Error as exc:
+    except sqlite3.Error:
+        # Like the real API, report failure without echoing engine internals back to the caller.
         return {
             "statement_id": sid,
-            "status": {"state": "FAILED", "error": {"error_code": "BAD_REQUEST", "message": str(exc)}},
+            "status": {
+                "state": "FAILED",
+                "error": {"error_code": "BAD_REQUEST", "message": "The SQL statement could not be executed."},
+            },
         }
     return {
         "statement_id": sid,

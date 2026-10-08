@@ -79,7 +79,8 @@ class Sandbox(Protocol):
 
     async def run(
         self, code: str, args: dict[str, Any], spec: SandboxSpec, session_id: str = ""
-    ) -> SandboxResult: ...
+    ) -> SandboxResult:
+        """Run ``code`` with ``args`` under ``spec`` and return what happened."""
 
 
 class SandboxUnavailable(RuntimeError):

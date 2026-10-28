@@ -28,7 +28,7 @@ dependencies = [
   "azure-eventgrid==4.22.1",
   "azure-functions==2.3.0",          # 2.x requires Python >= 3.13
   "azure-functions-durable==1.7.0",
-  "opentelemetry-api==1.44.0",
+  "opentelemetry-api==1.45.1",
   "opentelemetry-sdk==1.44.0",        # azure-monitor-opentelemetry 1.8.10 caps the SDK at <1.45
   "azure-monitor-opentelemetry==1.8.10",
 ]

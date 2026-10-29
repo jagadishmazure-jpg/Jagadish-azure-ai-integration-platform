@@ -2,15 +2,15 @@
 # function_app.py by scripts/package_functions.sh (azd prepackage hook).
 azure-functions==2.3.0
 azure-functions-durable==1.7.0
-agent-framework-core==1.19.0
-a2a-sdk[fastapi]==1.1.5
-mcp==2.2.0
-fastapi==0.141.1
+agent-framework-core==1.23.0
+a2a-sdk[fastapi]==1.2.3
+mcp==2.3.0
+fastapi==0.162.0
 httpx==0.28.1
-pydantic==2.13.5
+pydantic==2.14.1
 jsonschema==4.26.0
-pyjwt[crypto]==2.15.0
+pyjwt[crypto]==2.15.1
 msal==1.39.0
-azure-identity==1.25.3
-opentelemetry-sdk==1.44.0
-azure-monitor-opentelemetry==1.8.10
+azure-identity==1.26.0
+opentelemetry-sdk==1.45.1
+azure-monitor-opentelemetry==1.8.11

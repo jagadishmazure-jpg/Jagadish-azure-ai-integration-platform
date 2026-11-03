@@ -19,8 +19,8 @@ All versions below were resolved together on Python 3.13 and are pinned in `pypr
 | azure-keyvault-secrets | 4.11.2 | `kv://` resolution in Azure mode |
 | azure-servicebus / azure-eventgrid | 7.14.3 / 4.22.1 | Azure bus code paths |
 | azure-functions / azure-functions-durable | 2.3.0 / 1.7.0 | Functions v2 programming model + Durable orchestration |
-| opentelemetry-api / -sdk | 1.44.0 | spans and metrics |
-| azure-monitor-opentelemetry | 1.8.10 | exporter to Application Insights |
+| opentelemetry-api / -sdk | 1.45.2 | spans and metrics |
+| azure-monitor-opentelemetry | 1.8.11 | exporter to Application Insights |
 | Bicep CLI | 0.47.16 | `bicep build` in CI (warnings fail the job) |
 
 ## Surprises worth knowing
@@ -30,8 +30,8 @@ All versions below were resolved together on Python 3.13 and are pinned in `pypr
   `FunctionInvocationLayer`, which is only importable from `agent_framework._tools` in 1.19. A
   minor release could move it; the import is isolated in `aiip/agents/maf.py`.
 * **Version caps chain.** `agent-framework-foundry 1.13.1` requires `azure-ai-projects<2.7`, and
-  `azure-monitor-opentelemetry 1.8.10` caps `opentelemetry-sdk<1.45`. Upgrading OTel alone breaks
-  the resolver.
+  `azure-monitor-opentelemetry` pins the OTel SDK minor (1.8.10 capped it below 1.45; 1.8.11
+  requires `~=1.45.0`). Upgrade the two together; upgrading OTel alone breaks the resolver.
 * **azure-functions 2.x requires Python ≥ 3.13.** That pins the Functions app runtime and the
   container base image to 3.13.
 * **Durable SDK history JSON.** Replaying an orchestrator through

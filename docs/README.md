@@ -10,6 +10,7 @@ Design notes for each part of the platform. Start with `architecture.md`.
 | [architecture.md](architecture.md) | Reference topology, the five gateways, hosting, local vs Azure mode |
 | [identity.md](identity.md) | "As whom?": OBO, agent-scoped and hybrid identity, rules enforced in code |
 | [events.md](events.md) | Canonical events, admission (dedupe, budget), worker settlement, dead-lettering |
+| [retrieval-and-grounding.md](retrieval-and-grounding.md) | Hybrid retrieval vs a knowledge graph, permission-trimmed grounding, governed MCP / REST / A2A, Listen. Preview items marked [verify] |
 | [bpm.md](bpm.md) | Durable vendor-invoice process: agents as activities, HITL, timeout, compensation |
 | [connectors.md](connectors.md) | SaaS connector packs: auth, mapping, idempotency, error taxonomy, rate limits |
 | [observability.md](observability.md) | Span attributes, result classes, metrics, dashboards, audit |

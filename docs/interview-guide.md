@@ -32,6 +32,7 @@ and "retry after gateway restart: replay_source=vendor; SAP holds 1 invoice".
 | One SaaS OAuth flow, end to end? | Salesforce JWT bearer and Dataverse OBO in `aiip/connectors/auth.py` |
 | What does the agent card contain? | `control-plane/agent-cards/*.json` (owner, version, SLA, input schema, eval score, side-effect class) |
 | What does this cost idle? | [cost-estimate.md](cost-estimate.md): scale-to-zero defaults, billing dimensions |
+| Hybrid search or a knowledge graph, and who trims the documents? | [retrieval-and-grounding.md](retrieval-and-grounding.md); `aiip/retrieval/`; `tests/test_39_retrieval_grounding.py`. Preview items are marked [verify] |
 
 ## 45 minutes: design trade-offs to discuss
 

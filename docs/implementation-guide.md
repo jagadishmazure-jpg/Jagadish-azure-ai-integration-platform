@@ -35,23 +35,27 @@ Proof: `pytest tests/test_28_tool_gateway.py tests/test_29_mcp_gateway.py tests/
 
 Thin MAF agents that call only gateways ([components/agents.md](components/agents.md)), then the Durable Functions vendor-invoice orchestration with its 48-hour approval timer and compensation, and the Logic Apps alternative ([components/bpm-vendor-invoice.md](components/bpm-vendor-invoice.md)). Proof: `pytest tests/test_32_bpm.py`.
 
-## 7. Runtime safety
+## 7. Retrieval and grounding
+
+Add the fixture corpus, the hybrid ranker and the knowledge graph, then the permission trim and the one `ground` / `act` function. Expose it over REST, MCP and A2A, and start a run from a Listen event. Mark preview behavior [verify]. Proof: `pytest tests/test_39_retrieval_grounding.py` and `python scripts/run_retrieval_eval.py --check`. See [retrieval-and-grounding.md](retrieval-and-grounding.md) and [components/retrieval-and-grounding.md](components/retrieval-and-grounding.md).
+
+## 8. Runtime safety
 
 Policy prover, sandbox, kill switch and the out-of-band monitor ([components/runtime-safety.md](components/runtime-safety.md)). Proof: `python scripts/run_safety_evals.py --no-write`.
 
-## 8. Gates and contracts
+## 9. Gates and contracts
 
 Golden cases, the eval and contract gate, and generated contracts in `control-plane/` ([components/evals-and-contracts.md](components/evals-and-contracts.md)). Proof: `python scripts/run_eval_gate.py --no-write` and `python scripts/export_contracts.py --check`.
 
-## 9. Observability
+## 10. Observability
 
 `integration_span` attributes, completion metrics and the KQL file that generates both dashboards ([components/observability.md](components/observability.md)). Proof: `python scripts/build_dashboards.py --check`.
 
-## 10. Infrastructure and pipelines
+## 11. Infrastructure and pipelines
 
 Bicep and Terraform, validated in CI, deploy gated off ([components/infrastructure.md](components/infrastructure.md), [deployment.md](deployment.md)). Nothing has been deployed.
 
-## 11. Keep the docs honest
+## 12. Keep the docs honest
 
 `scripts/doc_drift.py` regenerates every `<!-- output: ... -->` and `<!-- code: ... -->` block in the Markdown files; `scripts/doc_demo.py` runs the demo and gates with timings and ids masked. CI runs `python scripts/doc_drift.py --check`, so pasted output and code excerpts must match the code.
 
@@ -60,6 +64,6 @@ python scripts/doc_drift.py          # refresh after a code change
 python scripts/doc_drift.py --check  # what CI runs
 ```
 
-## 12. End to end
+## 13. End to end
 
 `python scripts/demo.py` starts the gateways, agents, servers, workers and stand-ins as separate local processes and runs every drill over real HTTP; `--inproc` runs the same scenarios in one process.

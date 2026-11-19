@@ -101,7 +101,7 @@ python scripts/export_contracts.py --check
   PASS erp-agent          erp-03     expected error not_found, got not_found
   PASS erp-agent          erp-04     simulation.net_amount='24.00'
 
-contract checks: 28/28
+contract checks: 31/31
 ap-invoice-agent   6/6  score=1.0
 care-planner       5/5  score=1.0
 crm-agent          6/6  score=1.0

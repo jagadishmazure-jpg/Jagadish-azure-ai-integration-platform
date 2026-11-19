@@ -91,3 +91,8 @@ issuer inside the Identity Gateway with a JWKS endpoint), the secret store (an i
 business systems are sandbox stand-ins (`aiip.fakesaas`). `AIIP_MODE=azure` switches the same
 code paths to MSAL, Key Vault, Service Bus / Event Grid and `FoundryChatClient`. See
 [sdk-notes.md](sdk-notes.md) for what has and has not been exercised against real Azure.
+
+Retrieval and grounding are a separate in-process path, not a sixth gateway process: hybrid rank
+and a knowledge graph on one fixture corpus, a permission trim before scoring, and one govern
+function exposed over REST, MCP and A2A. A Listen event starts a context-agent run. Preview
+behavior is marked [verify]. The write-up is [retrieval-and-grounding.md](retrieval-and-grounding.md).

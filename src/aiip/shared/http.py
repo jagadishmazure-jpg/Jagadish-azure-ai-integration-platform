@@ -27,6 +27,8 @@ INPROC_APPS: dict[str, str] = {
     "agent-erp": "aiip.agents.apps:erp_app",
     "agent-data": "aiip.agents.apps:data_app",
     "agent-ap-invoice": "aiip.agents.apps:ap_invoice_app",
+    "agent-context": "aiip.agents.apps:context_app",
+    "context-gateway": "aiip.retrieval.rest:app",
 }
 
 _cache: dict[str, Any] = {}

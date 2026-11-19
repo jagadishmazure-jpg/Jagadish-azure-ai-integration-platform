@@ -18,3 +18,4 @@ Each page has the same 17 sections (purpose through 'Adopt this'). Output and co
 | [`observability.md`](observability.md) | Integration observability |
 | [`evals-and-contracts.md`](evals-and-contracts.md) | Evals and control-plane contracts |
 | [`infrastructure.md`](infrastructure.md) | Infrastructure |
+| [`retrieval-and-grounding.md`](retrieval-and-grounding.md) | Hybrid retrieval, knowledge graph, permission trim, governed MCP / REST / A2A, Listen |

@@ -10,19 +10,16 @@ import json
 from pathlib import Path
 
 from aiip.retrieval import graph, hybrid
-from aiip.retrieval.corpus import DIRECTORY, ENTITY_NAMES, Caller
+from aiip.retrieval.corpus import DIRECTORY, ENTITIES, Caller
 from aiip.retrieval.planner import plan
 
 CASES = Path(__file__).resolve().parents[3] / "evals" / "retrieval-cases.jsonl"
 SECRETS = ("LARKSPUR-77", "IBAN-STANDBY-4401", "ORPHAN-DOC-991")
 
 
-def _ids(hits) -> list[str]:
-    return [h.doc_id for h in hits]
-
-
 def hybrid_loop(question: str, caller: Caller, limit: int = 4) -> tuple[list[str], int]:
     """What a hybrid-only agent does: read entity names out of each hit and search again."""
+    names = sorted({e.name for e in ENTITIES}, key=len, reverse=True)
     found: list[str] = []
     seen = {question}
     queue = [question]
@@ -33,7 +30,7 @@ def hybrid_loop(question: str, caller: Caller, limit: int = 4) -> tuple[list[str
         for hit in hybrid.search(current, caller, k=4):
             if hit.doc_id not in found:
                 found.append(hit.doc_id)
-            for name in ENTITY_NAMES:
+            for name in names:
                 fresh = (
                     name.lower() in hit.text.lower()
                     and name.lower() not in current.lower()

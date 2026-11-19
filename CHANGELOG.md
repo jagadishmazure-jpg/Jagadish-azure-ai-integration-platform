@@ -24,6 +24,7 @@ Notable changes, newest first. The format follows [Keep a Changelog](https://kee
 
 ### Changed
 
+- The runtime image pins the current `python:3.13-slim` digest and upgrades Debian packages during the build, so the image scan can pick up fixed apt and zlib packages.
 - The README test count now matches the collected suite, and the README demo excerpt is generated from a real run.
 - The demo prints the event-storm outcome counts in sorted order, so its output is stable.
 - README sections follow one order: what, why, architecture, run, test, deploy, limits.

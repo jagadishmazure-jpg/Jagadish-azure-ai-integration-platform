@@ -18,10 +18,6 @@ from aiip.retrieval.corpus import EDGES, ENTITIES, PASSAGES, Caller, Edge, Entit
 from aiip.retrieval.permissions import visible_passages
 from aiip.shared import errors as E
 
-_GQL = re.compile(
-    r"^MATCH\s+(?P<path>\(.+\))\s+WHERE\s+(?P<var>\w+)\.name\s*=\s*'(?P<name>[^']{1,80})'\s+RETURN\s+(?P<ret>[A-Za-z0-9_.,\s]+)$",
-    re.I,
-)
 _NODE = re.compile(r"\((\w+):(\w+)\)")
 _EDGE = re.compile(r"(<-|-)\s*\[:(\w+)\]\s*(->|-)")
 
@@ -158,20 +154,52 @@ def _parse_path(path: str) -> list[tuple[str, str] | tuple[str, str, str]]:
     return pieces
 
 
+def _ident(value: str) -> bool:
+    return (
+        bool(value)
+        and (value[0].isalpha() or value[0] == "_")
+        and all(c.isalnum() or c == "_" for c in value)
+    )
+
+
+def _name_ref(part: str) -> bool:
+    var, dot, attr = part.partition(".")
+    return dot == "." and attr == "name" and _ident(var)
+
+
+def _parse_statement(text: str) -> tuple[str, str, str, list[str]]:
+    """Split one MATCH ... WHERE var.name = '...' RETURN var.name statement. No regex over the input."""
+    lowered = text.lower()
+    where_at = lowered.find(" where ")
+    ret_at = lowered.find(" return ")
+    if not lowered.startswith("match ") or where_at < 0 or ret_at < where_at:
+        raise E.GatewayError(E.VALIDATION, "GQL statement is not in the supported subset")
+    path = text[len("match ") : where_at].strip()
+    where = text[where_at + len(" where ") : ret_at].strip()
+    ret = text[ret_at + len(" return ") :].strip()
+    var, dot, rest = where.partition(".name")
+    rest = rest.strip()
+    if not _ident(var.strip()) or dot != ".name" or not rest.startswith("="):
+        raise E.GatewayError(E.VALIDATION, "GQL WHERE only supports var.name = '...'")
+    literal = rest[1:].strip()
+    if len(literal) < 3 or literal[0] != "'" or literal[-1] != "'" or "'" in literal[1:-1]:
+        raise E.GatewayError(E.VALIDATION, "GQL WHERE only supports var.name = '...'")
+    name = literal[1:-1]
+    if not name or len(name) > 80:
+        raise E.GatewayError(E.VALIDATION, "GQL WHERE only supports var.name = '...'")
+    returns = [part.strip() for part in ret.split(",") if part.strip()]
+    if not returns or any(not _name_ref(part) for part in returns):
+        raise E.GatewayError(E.VALIDATION, "GQL RETURN only supports var.name")
+    return path, var.strip(), name, returns
+
+
 def query_gql(statement: str, caller: Caller | None) -> list[dict[str, str]]:
     """Run one MATCH ... WHERE var.name = '...' RETURN var.name query. No general GQL."""
     text = " ".join(statement.split())
     if len(text) > 500 or any(word in text.lower() for word in ("delete", "create", "set ", "call ", ";")):
         raise E.GatewayError(E.VALIDATION, "GQL statement is not in the supported subset")
-    match = _GQL.match(text)
-    if not match:
-        raise E.GatewayError(E.VALIDATION, "GQL statement is not in the supported subset")
-    pieces = _parse_path(match.group("path"))
-    where_var, where_name = match.group("var"), match.group("name")
-    returns = [part.strip() for part in match.group("ret").split(",") if part.strip()]
-    for part in returns:
-        if not re.fullmatch(r"\w+\.name", part):
-            raise E.GatewayError(E.VALIDATION, "GQL RETURN only supports var.name")
+    path, where_var, where_name, returns = _parse_statement(text)
+    pieces = _parse_path(path)
     edges = visible_edges(caller)
     adj = _adjacency(edges)
     known = _entities()

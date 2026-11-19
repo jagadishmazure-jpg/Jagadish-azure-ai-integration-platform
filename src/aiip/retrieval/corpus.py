@@ -150,9 +150,6 @@ EDGES: tuple[Edge, ...] = (
     Edge("DESCRIBES", "policy:damaged-goods", "document:doc-returns", ("doc-returns",)),
 )
 
-# Surface forms a hybrid-only agent can read out of a passage and search for next.
-ENTITY_NAMES: tuple[str, ...] = tuple(sorted({e.name for e in ENTITIES}, key=len, reverse=True))
-
 BY_ID = {p.doc_id: p for p in PASSAGES}
 
 

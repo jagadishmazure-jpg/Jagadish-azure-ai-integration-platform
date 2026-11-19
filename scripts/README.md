@@ -4,6 +4,8 @@
 |---|---|
 | [`demo.py`](demo.py) | Run the end-to-end demo (`--inproc` for a single process) |
 | [`run_eval_gate.py`](run_eval_gate.py) | Golden-set evals + contract checks; writes `evals/scores.json` |
+| [`run_retrieval_eval.py`](run_retrieval_eval.py) | Hybrid vs knowledge-graph comparison; writes `evals/retrieval-scores.json` (`--check` for CI) |
+| [`doc_retrieval.py`](doc_retrieval.py) | Stable retrieval demo text for the docs |
 | [`run_safety_evals.py`](run_safety_evals.py) | Runtime-safety gate: attack scenarios contained, no false quarantines; writes `evals/safety-scores.json` |
 | [`export_contracts.py`](export_contracts.py) | Regenerate `control-plane/` (`--check` for CI) |
 | [`build_dashboards.py`](build_dashboards.py) | Generate workbook + Grafana JSON from KQL (`--check` for CI) |

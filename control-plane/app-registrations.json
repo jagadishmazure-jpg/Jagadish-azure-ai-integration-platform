@@ -13,7 +13,12 @@
     },
     {
       "app_id_uri": "api://aiip-care-planner",
-      "app_roles": {},
+      "app_roles": {
+        "api://aiip-context-gateway": [
+          "WorkIQ.Read",
+          "WorkIQ.Act"
+        ]
+      },
       "client_id": "af955157-45f5-5b5f-9e59-a146ff72fd93",
       "description": "Customer-care planner. Interactive; acts as the signed-in user.",
       "kind": "agent",
@@ -22,7 +27,9 @@
       "obo_targets": [
         "api://aiip-crm-agent",
         "api://aiip-erp-agent",
-        "api://aiip-data-agent"
+        "api://aiip-data-agent",
+        "api://aiip-context-agent",
+        "api://aiip-context-gateway"
       ]
     },
     {
@@ -84,6 +91,83 @@
       "kind": "agent",
       "managed_identity": "id-ap-invoice-agent",
       "name": "ap-invoice-agent",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-context-agent",
+      "app_roles": {},
+      "client_id": "adfb4e56-43ba-54a9-b085-0ceb13c889ad",
+      "description": "Grounded context agent. Reads and acts only inside the admin ceiling and the caller's own access.",
+      "kind": "agent",
+      "managed_identity": "id-context-agent",
+      "name": "context-agent",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-context-gateway",
+      "app_roles": {},
+      "client_id": "b317a67d-749c-5356-8646-b5f793990155",
+      "description": "Governed work-context API: permission-trimmed grounding over REST, with the same decisions as MCP and A2A.",
+      "kind": "gateway",
+      "managed_identity": "id-context-gateway",
+      "name": "context-gateway",
+      "obo_targets": []
+    },
+    {
+      "app_id_uri": "api://aiip-sales-agent",
+      "app_roles": {
+        "api://aiip-context-agent": [
+          "Agent.Invoke"
+        ],
+        "api://aiip-context-gateway": [
+          "WorkIQ.Read"
+        ]
+      },
+      "client_id": "f547b7c5-468f-5237-95af-c9c9e0604ce4",
+      "description": "Sales context agent. Policy is read on sales data only, and it cannot widen the admin ceiling.",
+      "kind": "agent",
+      "managed_identity": "id-sales-agent",
+      "name": "sales-agent",
+      "obo_targets": [
+        "api://aiip-context-gateway",
+        "api://aiip-context-agent"
+      ]
+    },
+    {
+      "app_id_uri": "api://aiip-hr-agent",
+      "app_roles": {
+        "api://aiip-context-agent": [
+          "Agent.Invoke"
+        ],
+        "api://aiip-context-gateway": [
+          "WorkIQ.Read"
+        ]
+      },
+      "client_id": "a16e9e6f-0f69-5f55-8e3a-06b1a685406a",
+      "description": "HR context agent. Policy is read on HR data only.",
+      "kind": "agent",
+      "managed_identity": "id-hr-agent",
+      "name": "hr-agent",
+      "obo_targets": [
+        "api://aiip-context-gateway",
+        "api://aiip-context-agent"
+      ]
+    },
+    {
+      "app_id_uri": "api://aiip-context-listen",
+      "app_roles": {
+        "api://aiip-context-agent": [
+          "Agent.Invoke"
+        ],
+        "api://aiip-context-gateway": [
+          "WorkIQ.Read"
+        ]
+      },
+      "client_id": "15149463-3a92-56fd-8464-57037bb4d185",
+      "description": "Listen worker. Starts a context-agent run when a subscribed work event arrives.",
+      "kind": "worker",
+      "managed_identity": "id-context-listen",
+      "name": "context-listen",
       "obo_targets": []
     },
     {

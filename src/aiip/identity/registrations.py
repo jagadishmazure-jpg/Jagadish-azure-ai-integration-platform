@@ -15,6 +15,7 @@ TOOL_GW = "api://aiip-tool-gateway"
 MCP_GW = "api://aiip-mcp-gateway"
 MCP_SERVERS = "api://aiip-mcp-servers"
 EVENT_GW = "api://aiip-event-gateway"
+CONTEXT_GW = "api://aiip-context-gateway"
 DATAVERSE = "https://contoso.crm.dynamics.com"
 
 
@@ -69,7 +70,14 @@ REGISTRATIONS: dict[str, AppRegistration] = {
             "care-planner",
             "agent",
             "Customer-care planner. Interactive; acts as the signed-in user.",
-            obo_targets=(agent_uri("crm-agent"), agent_uri("erp-agent"), agent_uri("data-agent")),
+            obo_targets=(
+                agent_uri("crm-agent"),
+                agent_uri("erp-agent"),
+                agent_uri("data-agent"),
+                agent_uri("context-agent"),
+                CONTEXT_GW,
+            ),
+            app_roles={CONTEXT_GW: ("WorkIQ.Read", "WorkIQ.Act")},
         ),
         AppRegistration(
             "crm-agent",
@@ -96,6 +104,36 @@ REGISTRATIONS: dict[str, AppRegistration] = {
             "agent",
             "Accounts-payable language agent (extract, classify, draft). Called by the BPM as an activity.",
             app_roles={TOOL_GW: ("PurchaseOrders.Read",)},
+        ),
+        AppRegistration(
+            "context-agent",
+            "agent",
+            "Grounded context agent. Reads and acts only inside the admin ceiling and the caller's own access.",
+        ),
+        AppRegistration(
+            "context-gateway",
+            "gateway",
+            "Governed work-context API: permission-trimmed grounding over REST, with the same decisions as MCP and A2A.",
+        ),
+        AppRegistration(
+            "sales-agent",
+            "agent",
+            "Sales context agent. Policy is read on sales data only, and it cannot widen the admin ceiling.",
+            obo_targets=(CONTEXT_GW, agent_uri("context-agent")),
+            app_roles={CONTEXT_GW: ("WorkIQ.Read",), agent_uri("context-agent"): ("Agent.Invoke",)},
+        ),
+        AppRegistration(
+            "hr-agent",
+            "agent",
+            "HR context agent. Policy is read on HR data only.",
+            obo_targets=(CONTEXT_GW, agent_uri("context-agent")),
+            app_roles={CONTEXT_GW: ("WorkIQ.Read",), agent_uri("context-agent"): ("Agent.Invoke",)},
+        ),
+        AppRegistration(
+            "context-listen",
+            "worker",
+            "Listen worker. Starts a context-agent run when a subscribed work event arrives.",
+            app_roles={CONTEXT_GW: ("WorkIQ.Read",), agent_uri("context-agent"): ("Agent.Invoke",)},
         ),
         AppRegistration(
             "worker-order-events",

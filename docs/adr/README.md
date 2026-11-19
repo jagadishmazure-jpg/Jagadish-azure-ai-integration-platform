@@ -11,3 +11,4 @@ Short records of the decisions that shape this repo: the context at the time, wh
 | [`0004-eval-gates-block-release.md`](0004-eval-gates-block-release.md) | Eval gates block the build |
 | [`0005-deploy-gated-off.md`](0005-deploy-gated-off.md) | Ship the deploy pipeline switched off |
 | [`0006-five-gateways-not-a-library.md`](0006-five-gateways-not-a-library.md) | Five gateway services, not a shared library |
+| [`0007-retrieval-compared-on-fixtures.md`](0007-retrieval-compared-on-fixtures.md) | Compare hybrid retrieval and a knowledge graph on fixtures, with one governed path |

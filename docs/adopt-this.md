@@ -14,6 +14,7 @@ How another team can reuse the integration platform: what to take, how to config
 | a money process with human approval | Durable orchestration or Logic Apps workflow | [bpm-vendor-invoice.md](components/bpm-vendor-invoice.md) |
 | a vendor integration | connector pack + stand-in | [connectors.md](components/connectors.md) |
 | containment for misbehaving agents | runtime safety and monitor | [runtime-safety.md](components/runtime-safety.md) |
+| grounding with a permission trim, and a ceiling across MCP, REST and A2A | retrieval package and the comparison eval | [retrieval-and-grounding.md](components/retrieval-and-grounding.md) |
 
 ## Configure
 
@@ -29,6 +30,7 @@ How another team can reuse the integration platform: what to take, how to config
 - **New vendor:** stand-in in `fakesaas/`, pack in `connectors/`, registry entry, contract tests.
 - **New tool:** `ToolDef`, card update, contract export, a failure drill in `tests/test_28_tool_gateway.py`.
 - **New event type:** class in `events/canonical.py` with business key and budget, graph in `events/graphs.py`.
+- **New grounded corpus:** passages and edges in `retrieval/corpus.py`, each with an ACL. Run `python scripts/run_retrieval_eval.py`.
 - **New safety rule:** rule in `safety/policy.yaml`, attack and benign scenarios in `evals/safety-scenarios.yaml`.
 - **New docs output:** add an `<!-- output: cmd -->` or `<!-- code: path::name -->` block and run `python scripts/doc_drift.py`.
 

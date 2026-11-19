@@ -1,0 +1,104 @@
+{
+  "cases": [
+    {
+      "chosen": "hybrid",
+      "expect_mode": "hybrid",
+      "graph_ids": [
+        "doc-returns"
+      ],
+      "graph_recall": 1.0,
+      "hybrid_ids": [
+        "doc-returns"
+      ],
+      "hybrid_recall": 1.0,
+      "id": "factual-returns",
+      "leaked": [],
+      "loop_ids": [
+        "doc-returns"
+      ],
+      "loop_recall": 1.0,
+      "loop_searches": 1,
+      "note": "",
+      "planned_searches": 1,
+      "topics": []
+    },
+    {
+      "chosen": "graph",
+      "expect_mode": "graph",
+      "graph_ids": [
+        "doc-agreement",
+        "doc-product",
+        "doc-regulation"
+      ],
+      "graph_recall": 1.0,
+      "hybrid_ids": [
+        "doc-regulation"
+      ],
+      "hybrid_recall": 0.333,
+      "id": "multihop-coating",
+      "leaked": [],
+      "loop_ids": [
+        "doc-regulation",
+        "doc-product",
+        "doc-agreement"
+      ],
+      "loop_recall": 1.0,
+      "loop_searches": 4,
+      "note": "Microsoft Retriever 1 public preview [verify]; Foundry IQ knowledge graph public preview [verify]",
+      "planned_searches": 1,
+      "topics": []
+    },
+    {
+      "chosen": "topics",
+      "expect_mode": "topics",
+      "graph_ids": [],
+      "graph_recall": 1.0,
+      "hybrid_ids": [
+        "doc-returns",
+        "doc-contact-injected"
+      ],
+      "hybrid_recall": 1.0,
+      "id": "broad-themes",
+      "leaked": [],
+      "loop_ids": [
+        "doc-returns",
+        "doc-contact-injected"
+      ],
+      "loop_recall": 1.0,
+      "loop_searches": 2,
+      "note": "Foundry IQ knowledge graph public preview [verify]",
+      "planned_searches": 1,
+      "topics": [
+        "customer-care",
+        "procurement",
+        "product-compliance"
+      ]
+    },
+    {
+      "chosen": "graph",
+      "expect_mode": "graph",
+      "graph_ids": [],
+      "graph_recall": 1.0,
+      "hybrid_ids": [],
+      "hybrid_recall": 1.0,
+      "id": "sales-no-leak",
+      "leaked": [],
+      "loop_ids": [],
+      "loop_recall": 1.0,
+      "loop_searches": 1,
+      "note": "Microsoft Retriever 1 public preview [verify]; Foundry IQ knowledge graph public preview [verify]",
+      "planned_searches": 1,
+      "topics": []
+    }
+  ],
+  "note": "Offline comparison on a synthetic corpus. Not a live Azure AI Search or Foundry IQ score.",
+  "summary": {
+    "cases": 4,
+    "graph_multihop_recall": 1.0,
+    "hybrid_loop_recall": 1.0,
+    "hybrid_loop_searches": 4,
+    "hybrid_multihop_recall": 0.333,
+    "leaks": 0,
+    "planned_searches": 1
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "capabilities": {
+    "extensions": [
+      {
+        "description": "Integration contract: owner, SLA, side effects, callers, schemas, eval score",
+        "params": {
+          "agent_id": "context-agent",
+          "allowed_callers": [
+            "care-planner",
+            "sales-agent",
+            "hr-agent",
+            "context-listen"
+          ],
+          "eval_score": null,
+          "identity_mode": "obo",
+          "owner": "Jagadish Meduri (integration engineering)",
+          "requires_headers": [
+            "authorization",
+            "traceparent",
+            "x-tenant-id",
+            "A2A-Version"
+          ],
+          "side_effect_class": "commit",
+          "skills": {
+            "act": {
+              "hitl": false,
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "body": {
+                    "maxLength": 500.0,
+                    "type": "string"
+                  },
+                  "resource": {
+                    "pattern": "^[a-z0-9-]{1,40}$",
+                    "type": "string"
+                  },
+                  "verb": {
+                    "enum": [
+                      "create",
+                      "update",
+                      "delete"
+                    ]
+                  }
+                },
+                "required": [
+                  "verb",
+                  "resource"
+                ],
+                "type": "object"
+              },
+              "side_effect": "commit"
+            },
+            "ground": {
+              "hitl": false,
+              "input_schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "hybrid",
+                      "graph",
+                      "topics",
+                      "plan"
+                    ]
+                  },
+                  "question": {
+                    "maxLength": 500.0,
+                    "minLength": 1.0,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "question"
+                ],
+                "type": "object"
+              },
+              "side_effect": "read"
+            }
+          },
+          "sla": {
+            "availability": "99.5%",
+            "p95_ms": 2000.0
+          },
+          "system_of_record": "synthetic knowledge corpus",
+          "version": "1.0.0"
+        },
+        "uri": "urn:aiip:integration-contract:v1"
+      }
+    ],
+    "streaming": false
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "description": "Grounds answers on the synthetic corpus and takes actions inside an admin ceiling. Knowledge-graph retrieval and the retrieval planner are public preview stand-ins [verify].",
+  "name": "Work context agent",
+  "provider": {
+    "organization": "AI Integration Platform (demo)",
+    "url": "https://github.com/jagadishmazure-jpg"
+  },
+  "skills": [
+    {
+      "description": "Permission-trimmed retrieval. mode is hybrid, graph or plan. [side-effect: read]",
+      "id": "ground",
+      "inputModes": [
+        "application/json"
+      ],
+      "name": "Ground",
+      "outputModes": [
+        "application/json"
+      ],
+      "tags": [
+        "read"
+      ]
+    },
+    {
+      "description": "Create or update a work item. Delete is refused by the admin ceiling. [side-effect: commit]",
+      "id": "act",
+      "inputModes": [
+        "application/json"
+      ],
+      "name": "Act",
+      "outputModes": [
+        "application/json"
+      ],
+      "tags": [
+        "commit"
+      ]
+    }
+  ],
+  "supportedInterfaces": [
+    {
+      "protocolBinding": "JSONRPC",
+      "protocolVersion": "1.0",
+      "url": "http://agent-context.inproc/a2a"
+    }
+  ],
+  "version": "1.0.0"
+}

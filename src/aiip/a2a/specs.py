@@ -277,6 +277,51 @@ AGENTS: tuple[AgentSpec, ...] = (
         service="agent-ap-invoice",
     ),
     AgentSpec(
+        id="context-agent",
+        name="Work context agent",
+        description=(
+            "Grounds answers on the synthetic corpus and takes actions inside an admin ceiling. "
+            "Knowledge-graph retrieval and the retrieval planner are public preview stand-ins [verify]."
+        ),
+        owner=OWNER,
+        version="1.0.0",
+        kind="a2a-agent",
+        identity_mode="obo",
+        skills=(
+            SkillSpec(
+                "ground",
+                "Ground",
+                "Permission-trimmed retrieval. mode is hybrid, graph or plan.",
+                "read",
+                _obj(
+                    {
+                        "question": {"type": "string", "minLength": 1, "maxLength": 500},
+                        "mode": {"enum": ["hybrid", "graph", "topics", "plan"]},
+                    },
+                    ["question"],
+                ),
+            ),
+            SkillSpec(
+                "act",
+                "Act",
+                "Create or update a work item. Delete is refused by the admin ceiling.",
+                "commit",
+                _obj(
+                    {
+                        "verb": {"enum": ["create", "update", "delete"]},
+                        "resource": {"type": "string", "pattern": "^[a-z0-9-]{1,40}$"},
+                        "body": {"type": "string", "maxLength": 500},
+                    },
+                    ["verb", "resource"],
+                ),
+            ),
+        ),
+        allowed_callers=("care-planner", "sales-agent", "hr-agent", "context-listen"),
+        sla_p95_ms=2000,
+        system_of_record="synthetic knowledge corpus",
+        service="agent-context",
+    ),
+    AgentSpec(
         id="worker-order-events",
         name="OrderCreated worker",
         description="Event-driven graph for SAP OrderCreated: credit-hold check, ITSM incident when blocked.",

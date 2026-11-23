@@ -61,3 +61,4 @@ All versions below were resolved together on Python 3.13 and are pinned in `pypr
 | Connector packs against sandbox stand-ins | Real Salesforce, ServiceNow, Workday, Dataverse, SAP, Jira tenants |
 | `bicep build` clean, no warnings | `azd provision` / `azd deploy`; APIM policies at runtime |
 | Dashboards generated from KQL | KQL against real Application Insights tables |
+| Hybrid vs graph comparison, permission trim, ceiling, Listen (`tests/test_39_retrieval_grounding.py`) | Azure AI Search, Foundry IQ, SharePoint, Purview, Work IQ |

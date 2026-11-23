@@ -8,8 +8,9 @@
 - **Agents act with the user's own permissions:** for interactive requests, Microsoft Entra on-behalf-of (OBO) tokens mean an agent can only see and change what the signed-in user could (background workers use their own managed identity), and every action is recorded in a tamper-evident audit trail.
 - **Reliable writes into systems of record:** repeated requests don't create duplicates (idempotency keys), circuit breakers stop calls to a failing system, and an HTTP 200 that hides a business error is still counted as a failure.
 - **Event-driven agents and human-approved business processes:** SAP events flow through Event Grid and Service Bus to agent workers, and a Durable Functions vendor-invoice process waits for a human approval (48-hour timer) before money moves.
+- **Grounding with a permission trim:** hybrid retrieval compared with a knowledge-graph walk on one synthetic corpus, and a governed path over MCP, REST and A2A whose admin ceiling blocks delete. A Listen event starts an agent run. Preview behavior is marked [verify].
 - **Runtime safety layer with an out-of-band watchdog:** tool code runs in a sandbox with networking off, every agent action is checked against a default-deny policy that records why it was allowed, and a separate monitor reading signed telemetry quarantines an agent within milliseconds (under 2 ms measured locally) of an injection, data leak, runaway loop or unexpected tool (9 of 9 attack scenarios contained, 0 false alarms).
-- **232 automated tests** plus eval, contract and safety gates and an end-to-end demo over real HTTP run in CI.
+- **244 automated tests** plus eval, contract, retrieval-comparison and safety gates and an end-to-end demo over real HTTP run in CI.
 - **Terraform + Bicep, GitHub Actions deploy:** the same infrastructure in both tools ([`infra/terraform`](infra/terraform/README.md)), including Azure Monitor alert rules and diagnostic settings (on by default) and opt-in Defender for Cloud plans, all validated offline and not deployed, and a pipeline with OIDC login (no secrets), a Bicep/Terraform choice and dev -> prod approval gates. It stays switched off until a subscription exists ([docs/deployment.md](docs/deployment.md)).
 
 **Skills demonstrated:** Azure integration, API gateways (APIM), Microsoft Entra ID / OAuth 2.0 OBO, Event Grid, Service Bus, Durable Functions, Logic Apps, MCP, A2A, Microsoft Agent Framework, FastAPI, Bicep/azd, Terraform, GitHub Actions (OIDC), Python.
@@ -44,6 +45,7 @@ it is **safe to repeat**, and whether the **business step actually completed**.
 | **Identity: as whom?** - OBO for interactive journeys, client credentials / managed identity for workers, hybrid; one app registration per workload; actor + subject on every record | demo steps 1-2, `tests/test_33_identity.py` |
 | **SaaS connector packs** - Salesforce, ServiceNow, Workday, Dynamics/Dataverse, SAP OData, Jira: auth, canonical mapping, idempotent writes, error taxonomy, rate-limit hints, minimal fields | `tests/test_34_saas_connectors.py` |
 | **Integration observability** - spans with system / operation / business_key / result_class; HTTP 200 with a business error counts as failure; completion metrics; Workbook + Grafana from one KQL file | demo step 10, `tests/test_35_observability.py` |
+| **Retrieval and grounding** - Azure AI Search-shaped hybrid rank compared with a knowledge-graph walk on one synthetic corpus; passages trimmed to the caller's user, Entra group and site group before scoring; one govern function over REST, MCP and A2A with an admin ceiling; a Listen event starts a context-agent run. Preview items are marked [verify]. Not connected to Foundry IQ, Azure AI Search, SharePoint or Work IQ | [`src/aiip/retrieval/`](src/aiip/retrieval), `tests/test_39_retrieval_grounding.py`, [docs/retrieval-and-grounding.md](docs/retrieval-and-grounding.md) |
 | **Runtime safety** - agent sandbox (subprocess, deny-by-default network, scoped files, CPU/memory/time limits, env allow-list; ACA dynamic sessions adapter), policy prover (YAML, default deny, proof per decision in the audit chain), Ed25519-signed audit chains, out-of-band monitor with kill switch enforced by every gateway; attack/benign eval gate | [`src/aiip/safety/`](src/aiip/safety), `tests/test_37_runtime_safety.py`, `tests/test_38_out_of_band_monitor.py` |
 | **Reference architecture as code** - Bicep + `azd` and a Terraform twin, cost-minimized defaults, opt-in Front Door / Private Link / AKS (with hardened Kubernetes manifests validated by kubeconform), gated GitHub Actions deploy with OIDC and approval gates | `infra/`, [`k8s/`](k8s/README.md), [docs/deployment.md](docs/deployment.md), `tests/test_36_reference_architecture.py` |
 
@@ -82,7 +84,29 @@ flowchart LR
 ```
 
 More diagrams: [architecture](docs/architecture.md) · [identity](docs/identity.md) ·
-[events](docs/events.md) · [BPM](docs/bpm.md).
+[events](docs/events.md) · [BPM](docs/bpm.md) · [retrieval](docs/retrieval-and-grounding.md).
+
+## Retrieval and grounding
+
+Hybrid retrieval and a knowledge graph answer the same synthetic questions. The hybrid path is the Azure AI Search shape: BM25, a hashing-trick vector, and reciprocal rank fusion. The graph follows Foundry IQ knowledge graphs (public preview [verify]): each edge keeps its source documents, and a planner stands in for Microsoft Retriever 1 (public preview [verify]). On the multi-hop fixture the graph recalls every supporting document in one search. A single hybrid query does not, and a hybrid-only loop takes four searches to catch up.
+
+Passages are filtered to the caller before they are scored: an explicit user, an Entra group, or a SharePoint-style site group. A missing ACL fails closed. REST, MCP and A2A call one govern function. The admin ceiling allows read, create and update, and refuses delete on all three. A Listen event starts a context-agent run after the event text is screened.
+
+```mermaid
+flowchart LR
+  Q[question] --> P[planner]
+  P --> H[hybrid BM25 + vector + RRF]
+  P --> G[knowledge graph]
+  H --> T[permission trim]
+  G --> T
+  T --> S[sanitize, no tools]
+  ADM[admin ceiling] --> GOV[one govern function]
+  POL[agent policy] --> GOV
+  GOV --> REST[REST] & MCP[MCP] & A2A[A2A]
+  EV[Listen event] --> RUN[context-agent run] --> GOV
+```
+
+Sources: [Foundry IQ knowledge graphs](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/foundry-iq-introducing-knowledge-graphs-engineered-for-agents/4572683) and [Work IQ at Ignite 2026](https://techcommunity.microsoft.com/blog/microsoft_365blog/whats-new-in-work-iq-at-ignite-2026-agents-that-get-work-done/4572219). Live search, SharePoint and Work IQ are not connected. Write-up: [docs/retrieval-and-grounding.md](docs/retrieval-and-grounding.md).
 
 ## Run it (about a minute)
 
@@ -131,7 +155,8 @@ What the demo prints (abridged, generated from `python scripts/demo.py --inproc`
 
 ```bash
 ruff check . && ruff format --check .
-pytest -q                                     # 232 offline tests (one skips without the Bicep CLI)
+pytest -q                                     # 244 offline tests (one skips without the Bicep CLI)
+python scripts/run_retrieval_eval.py --check  # hybrid vs graph, no leakage
 python scripts/run_eval_gate.py --no-write    # eval + contract gate
 python scripts/run_safety_evals.py --no-write # attacks contained, no false quarantines
 python scripts/export_contracts.py --check && python scripts/build_dashboards.py --check
@@ -148,7 +173,7 @@ Two paths, neither of which has been run yet: `azd up` from a laptop ([docs/depl
 
 | File | What it does |
 |---|---|
-| [`src/aiip/`](src/aiip) | The platform: `identity/`, `tools/`, `mcp/`, `mcp_servers/`, `a2a/`, `agents/`, `events/`, `bpm/`, `connectors/`, `fakesaas/`, `safety/`, `shared/` |
+| [`src/aiip/`](src/aiip) | The platform: `identity/`, `tools/`, `mcp/`, `mcp_servers/`, `a2a/`, `agents/`, `events/`, `bpm/`, `connectors/`, `fakesaas/`, `retrieval/`, `safety/`, `shared/` |
 | [`functions/`](functions) | Azure Functions (Python v2) app hosting the Durable vendor-invoice orchestration |
 | [`logicapps/`](logicapps) | The same process as a Logic Apps Standard workflow, for comparison |
 | [`control-plane/`](control-plane) | Generated contracts: agent cards, tool registry, MCP catalog, app registrations |
@@ -158,7 +183,7 @@ Two paths, neither of which has been run yet: `azd up` from a laptop ([docs/depl
 | [`infra/`](infra) | Bicep for `azd` (subscription scope, cost-minimized defaults) and the Terraform twin in [`infra/terraform`](infra/terraform/README.md) |
 | [`scripts/`](scripts) | Demo, eval gate, safety gate, contract export, dashboard build, packaging hooks, originality check |
 | [`tests/`](tests) | Offline test suite, one file per integration topic, with failure drills |
-| [`docs/`](docs) | Architecture, identity, events, BPM, connectors, observability, interview guide, SDK notes, cost, deploy, best practices, ADRs |
+| [`docs/`](docs) | Architecture, identity, events, BPM, retrieval and grounding, connectors, observability, interview guide, SDK notes, cost, deploy, best practices, ADRs |
 | [`SECURITY.md`](SECURITY.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`CHANGELOG.md`](CHANGELOG.md) | Vulnerability reporting, contribution rules, change history |
 | [`azure.yaml`](azure.yaml) | `azd` services (one image, many commands) and hooks |
 | [`Dockerfile`](Dockerfile) | Single platform image (Python 3.13 slim, non-root) |
@@ -205,18 +230,19 @@ The [interview guide](docs/interview-guide.md) maps common interview questions t
 * The AKS manifests in `k8s/` pass kubeconform but have never been applied; the image and the Workload ID client ids are placeholders, the federated credentials are not in the IaC, and the workers have no KEDA scaler on AKS.
 * The Terraform twin passes validate, offline `terraform test`, tflint and checkov, but no plan has run against a subscription. The deploy pipeline's GitHub Environments and reviewers do not exist yet.
 * Eval and safety scores come from small synthetic scenario sets. The watchdog latency (under 2 ms, median below 1 ms) was measured on a laptop, not in Azure.
+* Retrieval is a fixture comparison. Azure AI Search, Foundry IQ, SharePoint and Work IQ are not connected. Knowledge graphs, Retriever 1 and the other preview items are marked [verify]. The context agent is in-process and is not in the Bicep or Terraform workload list.
 
 ## Documentation
 
 | Document | What it covers |
 |---|---|
-| [`docs/components/`](docs/components/README.md) | One page per component (14) with the same 17 sections: purpose, mermaid architecture, step-by-step flow, key files, generated code excerpts and real output, configuration, commands, tests and gates, guardrails, security, observability, failure modes, Azure mapping, limitations, talking points and "Adopt this" |
+| [`docs/components/`](docs/components/README.md) | One page per component (15) with the same 17 sections: purpose, mermaid architecture, step-by-step flow, key files, generated code excerpts and real output, configuration, commands, tests and gates, guardrails, security, observability, failure modes, Azure mapping, limitations, talking points and "Adopt this" |
 | [`docs/implementation-guide.md`](docs/implementation-guide.md) | Build order, layer by layer, with the proof command for each step |
 | [`docs/adopt-this.md`](docs/adopt-this.md) | How another team reuses, configures and extends the platform |
 | [`docs/best-practices.md`](docs/best-practices.md) | Enterprise cloud and agentic AI practices, each marked implemented, written-not-deployed or planned, with links to the code |
 | [`docs/adr/`](docs/adr/README.md) | Architecture decision records (Bicep + Terraform, offline mocks, OIDC, eval gates, gated deploy, ...) |
 | [`docs/deployment.md`](docs/deployment.md) | The GitHub Actions pipeline and the one-time Azure setup it needs |
-| [`docs/architecture.md`](docs/architecture.md) · [`docs/identity.md`](docs/identity.md) · [`docs/interview-guide.md`](docs/interview-guide.md) | Architecture, the identity model, interview questions mapped to code |
+| [`docs/architecture.md`](docs/architecture.md) · [`docs/identity.md`](docs/identity.md) · [`docs/retrieval-and-grounding.md`](docs/retrieval-and-grounding.md) · [`docs/interview-guide.md`](docs/interview-guide.md) | Architecture, the identity model, retrieval and grounding, interview questions mapped to code |
 | [`SECURITY.md`](SECURITY.md) · [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`CHANGELOG.md`](CHANGELOG.md) | How to report a vulnerability, how to contribute, what changed |
 
 MIT licensed. Author: Jagadish Meduri.

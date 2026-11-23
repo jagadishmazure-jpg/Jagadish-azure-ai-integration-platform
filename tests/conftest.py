@@ -24,6 +24,7 @@ def reset_all():
     from aiip.events import gateway as ev_gw
     from aiip.fakesaas import state
     from aiip.mcp import gateway as mcp_gw
+    from aiip.retrieval import reset as reset_retrieval
     from aiip.safety import stand_ins
     from aiip.safety.killswitch import KILL
     from aiip.safety.supervisor import TELEMETRY
@@ -32,6 +33,7 @@ def reset_all():
     from aiip.tools import gateway as tool_gw
 
     state.reset()
+    reset_retrieval()
     registry.reset()
     tool_gw.reset_state()
     mcp_gw.reset_state()

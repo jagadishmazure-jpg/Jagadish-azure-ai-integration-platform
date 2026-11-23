@@ -6,6 +6,7 @@ from aiip.a2a.server import create_agent_app
 from aiip.a2a.specs import versions
 from aiip.agents.domain import ap_handler, crm_handler, data_handler, erp_handler
 from aiip.agents.planner import planner_handler
+from aiip.retrieval.handler import context_handler
 
 HANDLERS = {
     "care-planner": planner_handler,
@@ -13,6 +14,7 @@ HANDLERS = {
     "erp-agent": erp_handler,
     "data-agent": data_handler,
     "ap-invoice-agent": ap_handler,
+    "context-agent": context_handler,
 }
 
 
@@ -28,3 +30,4 @@ crm_app = build("crm-agent")
 erp_app = build("erp-agent")
 data_app = build("data-agent")
 ap_invoice_app = build("ap-invoice-agent")
+context_app = build("context-agent")
